@@ -28,7 +28,9 @@ import * as detectBusinessAnomalies from './detect_business_anomalies.js';
 import * as comparePlannedVsActual from './compare_planned_vs_actual.js';
 import * as generateKpis from './generate_kpis.js';
 import * as trackProjectProgress from './track_project_progress.js';
-import * as automateFollowups from './automate_followups.js';
+// automate_followups: retirado del bus nativo — ahora lo implementa un servicio
+// EXTERNO que publica FOLLOWUP_SCHEDULED por la API. Se quitó para no agendar
+// el mismo seguimiento dos veces (placeholder nativo + runner externo).
 
 const TOOLS = [
   inspectProductQuality,
@@ -44,8 +46,7 @@ const TOOLS = [
   detectBusinessAnomalies,
   comparePlannedVsActual,
   generateKpis,
-  trackProjectProgress,
-  automateFollowups
+  trackProjectProgress
 ];
 
 const REGISTRY = new Map();

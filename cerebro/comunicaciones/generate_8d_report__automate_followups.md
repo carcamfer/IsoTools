@@ -38,9 +38,10 @@ tags: [comunicacion, 8D_REPORT_ISSUED]
      Así el programador del otro lado ve qué cambió sin leer el código.
      Formato:  - [YYYY-MM-DD] (quién) qué cambió en el payload/condición y por qué -->
 - [2026-06-28] (auto) nota inicial generada desde communication-rules.json.
+- [2026-07-27] (Carlos) **`automate_followups` pasa a dueño EXTERNO.** Se retiró el handler nativo (`src/tools/automate_followups.js`) y la regla `rule-pkg-003` del bus: el placeholder agendaba seguimientos en paralelo al servicio externo y se duplicaba el mismo 8D. El contrato de esta nota **sigue vigente** — lo que cambia es quién lo cumple: ahora el servicio externo consume `8D_REPORT_ISSUED` por `GET /api/v1/events` y publica `FOLLOWUP_SCHEDULED` por `POST /api/v1/events`. El bus ya no ejecuta nada al llegar `8D_REPORT_ISSUED`.
 
 ## Flujo de trabajo
 1. `npm run rama:comm generate_8d_report__automate_followups` (crea/cambia a la rama `comm/generate_8d_report__automate_followups`).
 2. Implementa el cambio en ambas tools si aplica y actualiza esta bitácora.
-3. PR de la rama a `main` cuando el contrato quede estable.
+3. PR de la rama a `feature/filter` cuando el contrato quede estable.
 

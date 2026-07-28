@@ -83,16 +83,6 @@
       "description": "Leads de alto puntaje alimentan la predicción de ventas"
     },
     {
-      "id": "rule-erp-009",
-      "sourceToolId": "predict_sales",
-      "targetToolId": "automate_followups",
-      "event": "SALES_PREDICTED",
-      "protocol": "MQTT",
-      "topic": "crm/sales/prediction",
-      "triggerCondition": "closeProbability > 0.6",
-      "description": "Alta probabilidad de venta dispara seguimiento automático"
-    },
-    {
       "id": "rule-cyber-001",
       "sourceToolId": "monitor_ot_network",
       "targetToolId": "detect_network_anomalies_local",
@@ -799,16 +789,6 @@
         "description": "Modo de falla crítico (FMEA) levanta una no conformidad preventiva"
   },
     {
-        "id": "rule-pkg-003",
-        "sourceToolId": "generate_8d_report",
-        "targetToolId": "automate_followups",
-        "event": "8D_REPORT_ISSUED",
-        "protocol": "REST",
-        "topic": "POST /api/quality/followups",
-        "triggerCondition": "always",
-        "description": "Reporte 8D emitido agenda seguimientos hasta el cierre de la acción"
-  },
-    {
         "id": "rule-pkg-004",
         "sourceToolId": "manage_device_registry",
         "targetToolId": "run_msa_analysis",
@@ -887,16 +867,6 @@
         "topic": "POST /api/mgmt/progress",
         "triggerCondition": "always",
         "description": "KPIs generados actualizan el avance del proyecto de implementación ISO"
-  },
-    {
-        "id": "rule-pkg-012",
-        "sourceToolId": "track_project_progress",
-        "targetToolId": "automate_followups",
-        "event": "PROJECT_AT_RISK",
-        "protocol": "REST",
-        "topic": "POST /api/mgmt/followups",
-        "triggerCondition": "status == 'at_risk'",
-        "description": "Proyecto en riesgo agenda seguimientos automáticos con los responsables"
   }
   ]
 }

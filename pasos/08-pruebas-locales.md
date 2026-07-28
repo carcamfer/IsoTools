@@ -148,6 +148,16 @@ curl "$API_BASE_URL/api/v1/events/subscriptions/<tu_tool_id>?since_seq=0" \
 
 Guarda el `next_seq` de la respuesta: es el cursor que mandas en el siguiente tick.
 
+> ⚠️ **`since_seq=0` es para probar, NO para arrancar tu servicio.** En la
+> plataforma central el `0` significa "desde el principio de los tiempos": tu
+> tool procesaría todo el backlog ya atendido y publicaría duplicados reales.
+> En el primer arranque pide la punta y empieza ahí:
+> ```bash
+> curl -s "$API_BASE_URL/api/v1/events/latest?type=<TIPO_QUE_CONSUMES>" \
+>   -H "x-api-key: $API_KEY" | jq '.max_seq'   # -> úsalo como since_seq inicial
+> ```
+> Detalle completo: [README § 5.3 — arranque en frío](../README.md#️-el-arranque-en-frío-no-empieces-en-since_seq0).
+
 ---
 
 ## 8.5 Qué hacer si tu tool no se dispara

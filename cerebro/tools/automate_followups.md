@@ -4,15 +4,15 @@ id: automate_followups
 nombre: "Automatizar Seguimientos"
 categoria: erp
 agente: erp-gestion-empresarial
-estado: implementada
+estado: externa
 consume: [SALES_PREDICTED, 8D_REPORT_ISSUED, PROJECT_AT_RISK]
 produce: []
 programador:
-actualizado: 2026-06-28
-tags: [tool, erp, implementada]
+actualizado: 2026-07-27
+tags: [tool, erp, externa]
 ---
 # Automatizar Seguimientos
-> `automate_followups` · Cloud · categoría **erp** · estado **implementada**
+> `automate_followups` · Cloud · categoría **erp** · estado **externa** (sin handler nativo)
 > Pertenece al agente [[../agentes/erp-gestion-empresarial|Agente ERP & Gestión Empresarial]]
 ## Qué hace
 Genera y envía seguimientos automáticos a leads, proveedores y órdenes pendientes.
@@ -38,3 +38,4 @@ Genera y envía seguimientos automáticos a leads, proveedores y órdenes pendie
 <!-- Anota aquí cada cambio de contrato/lógica que pueda afectar a otras tools.
      Formato sugerido:  - [YYYY-MM-DD] (tu-nombre) qué cambió y a quién afecta -->
 - [2026-06-28] (auto) nota inicial generada desde la configuración.
+- [2026-07-27] (Carlos) Sale del bus nativo: se eliminó `src/tools/automate_followups.js` y las reglas `rule-pkg-003`, `rule-pkg-012`, `rule-erp-009`. La tool la implementa ahora un **servicio EXTERNO** que consume por `GET /api/v1/events` y publica `FOLLOWUP_SCHEDULED` por `POST /api/v1/events`. Sigue en `tools.json`, así que el externo puede usar `GET /api/v1/events/subscriptions/automate_followups?since_seq=N`. **No volver a registrar un handler nativo:** se agendaría el mismo seguimiento dos veces.

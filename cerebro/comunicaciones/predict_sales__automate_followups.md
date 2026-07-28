@@ -38,9 +38,10 @@ tags: [comunicacion, SALES_PREDICTED]
      Así el programador del otro lado ve qué cambió sin leer el código.
      Formato:  - [YYYY-MM-DD] (quién) qué cambió en el payload/condición y por qué -->
 - [2026-06-28] (auto) nota inicial generada desde communication-rules.json.
+- [2026-07-27] (Carlos) **`automate_followups` pasa a dueño EXTERNO.** Se retiró el handler nativo y la regla `rule-erp-009` del bus. ⚠️ **Hueco de cobertura:** el servicio externo hoy solo declara consumir `8D_REPORT_ISSUED` y `PROJECT_AT_RISK`. Mientras no añada `SALES_PREDICTED` a sus `consumes`, **nadie atiende esta comunicación** (antes la atendía el placeholder con datos falsos). La condición `closeProbability > 0.6` la debe aplicar el consumidor externo.
 
 ## Flujo de trabajo
 1. `npm run rama:comm predict_sales__automate_followups` (crea/cambia a la rama `comm/predict_sales__automate_followups`).
 2. Implementa el cambio en ambas tools si aplica y actualiza esta bitácora.
-3. PR de la rama a `main` cuando el contrato quede estable.
+3. PR de la rama a `feature/filter` cuando el contrato quede estable.
 
