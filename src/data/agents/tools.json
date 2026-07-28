@@ -438,11 +438,67 @@
     "nameEs": "Comparar Planificado vs Real",
     "type": "Cloud",
     "category": "erp",
-    "descriptionEs": "Compara métricas planificadas contra ejecución real en producción, compras y costos.",
-    "descriptionEn": "Compares planned metrics against real execution in production, purchasing and costs.",
+    "descriptionEs": "Compara metricas planificadas contra ejecucion real con trazabilidad, calidad de datos y reglas configurables.",
+    "descriptionEn": "Compares planned metrics against actual execution with traceability, data quality and configurable rules.",
     "inputSchema": {
       "type": "object",
+      "required": [
+        "organization_id",
+        "analysis_id",
+        "as_of_date",
+        "metrics"
+      ],
       "properties": {
+        "organization_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "organizationId": {
+          "type": "string"
+        },
+        "tenant_id": {
+          "type": "string"
+        },
+        "tenantId": {
+          "type": "string"
+        },
+        "plant_id": {
+          "type": "string"
+        },
+        "plantId": {
+          "type": "string"
+        },
+        "process_id": {
+          "type": "string"
+        },
+        "processId": {
+          "type": "string"
+        },
+        "analysis_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "analysisId": {
+          "type": "string"
+        },
+        "as_of_date": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "asOfDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "domain": {
+          "type": "string",
+          "enum": [
+            "production",
+            "quality",
+            "cost",
+            "schedule",
+            "service"
+          ]
+        },
         "module": {
           "type": "string",
           "enum": [
@@ -458,36 +514,6 @@
         "periodEnd": {
           "type": "string",
           "format": "date"
-        }
-      },
-      "required": [
-        "module",
-        "periodStart",
-        "periodEnd"
-      ]
-    },
-    "outputSchema": {
-      "type": "object",
-      "properties": {
-        "deviationPercent": {
-          "type": "number"
-        },
-        "status": {
-          "type": "string",
-          "enum": [
-            "on_track",
-            "deviation",
-            "critical"
-          ]
-        },
-        "details": {
-          "type": "array",
-          "items": {
-            "type": "object"
-          }
-        },
-        "plantId": {
-          "type": "string"
         },
         "period": {
           "type": "string",
@@ -499,9 +525,252 @@
         },
         "metrics": {
           "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "items": {
+            "type": "object",
+            "required": [
+              "metric_id",
+              "name",
+              "planned",
+              "actual",
+              "unit",
+              "direction"
+            ],
+            "properties": {
+              "metric_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "metricId": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "planned": {
+                "type": "number"
+              },
+              "actual": {
+                "type": "number"
+              },
+              "unit": {
+                "type": "string",
+                "minLength": 1
+              },
+              "direction": {
+                "type": "string",
+                "enum": [
+                  "higher_is_better",
+                  "lower_is_better",
+                  "target"
+                ]
+              },
+              "absolute_tolerance": {
+                "type": "number"
+              },
+              "absoluteTolerance": {
+                "type": "number"
+              },
+              "relative_tolerance_percent": {
+                "type": "number"
+              },
+              "relativeTolerancePercent": {
+                "type": "number"
+              },
+              "weight": {
+                "type": "number",
+                "minimum": 0
+              }
+            }
+          }
+        },
+        "thresholds": {
+          "type": "object",
+          "properties": {
+            "deviation_percent": {
+              "type": "number",
+              "default": 5
+            },
+            "deviationPercent": {
+              "type": "number"
+            },
+            "critical_percent": {
+              "type": "number",
+              "default": 15
+            },
+            "criticalPercent": {
+              "type": "number"
+            },
+            "planned_zero_policy": {
+              "type": "string",
+              "enum": [
+                "not_calculable"
+              ],
+              "default": "not_calculable"
+            }
+          }
+        },
+        "source": {
+          "type": "object",
+          "properties": {
+            "source_system": {
+              "type": "string"
+            },
+            "source_record_ids": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "source_extracted_at": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        }
+      }
+    },
+    "outputSchema": {
+      "type": "object",
+      "required": [
+        "analysis_type",
+        "status",
+        "severity",
+        "summary",
+        "details",
+        "recommended_actions",
+        "audit",
+        "data_quality",
+        "plant_id",
+        "plantId",
+        "period",
+        "metrics",
+        "deviation_percent",
+        "weighted_deviation_percent"
+      ],
+      "properties": {
+        "analysis_type": {
+          "type": "string"
+        },
+        "domain": {
+          "type": "string"
+        },
+        "analysis_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "organization_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "plant_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "plantId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "period": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "daily",
+            "weekly",
+            "monthly",
+            null
+          ]
+        },
+        "period_start": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "period_end": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "metrics": {
+          "type": "array",
           "items": {
             "type": "string"
           }
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "on_track",
+            "deviation",
+            "critical",
+            "not_calculable"
+          ]
+        },
+        "severity": {
+          "type": "string",
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ]
+        },
+        "summary": {
+          "type": "string"
+        },
+        "deviation_percent": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "deviationPercent": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "weighted_deviation_percent": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "details": {
+          "type": "object",
+          "properties": {
+            "metrics": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "recommended_actions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "audit": {
+          "type": "object"
+        },
+        "data_quality": {
+          "type": "object"
         }
       }
     },
@@ -660,22 +929,279 @@
     "nameEs": "Rastrear Progreso de Proyectos",
     "type": "Cloud",
     "category": "erp",
-    "descriptionEs": "Monitorea el avance de proyectos industriales, hitos cumplidos y recursos utilizados.",
-    "descriptionEn": "Monitors industrial project progress, completed milestones and used resources.",
+    "descriptionEs": "Monitorea avance planificado contra real, hitos, presupuesto y riesgo de proyecto.",
+    "descriptionEn": "Monitors planned vs actual progress, milestones, budget and project risk.",
     "inputSchema": {
       "type": "object",
+      "required": [
+        "organization_id",
+        "project_id",
+        "project_name",
+        "as_of_date",
+        "planned_start_date",
+        "planned_end_date",
+        "planned_progress_percent",
+        "actual_progress_percent"
+      ],
       "properties": {
+        "organization_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "organizationId": {
+          "type": "string"
+        },
+        "tenant_id": {
+          "type": "string"
+        },
+        "tenantId": {
+          "type": "string"
+        },
+        "plant_id": {
+          "type": "string"
+        },
+        "plantId": {
+          "type": "string"
+        },
+        "project_id": {
+          "type": "string",
+          "minLength": 1
+        },
         "projectId": {
           "type": "string"
+        },
+        "project_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "projectName": {
+          "type": "string"
+        },
+        "as_of_date": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "asOfDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "planned_start_date": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "plannedStartDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "planned_end_date": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "plannedEndDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "planned_progress_percent": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "plannedProgressPercent": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "actual_progress_percent": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "actualProgressPercent": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "milestones": {
+          "type": "array",
+          "maxItems": 100,
+          "items": {
+            "type": "object",
+            "properties": {
+              "milestone_id": {
+                "type": "string"
+              },
+              "milestoneId": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "due_date": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "dueDate": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "completed_at": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "completedAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "completed",
+                  "pending",
+                  "blocked",
+                  "cancelled"
+                ]
+              },
+              "critical": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "budget": {
+          "type": "object",
+          "properties": {
+            "planned_amount": {
+              "type": "number",
+              "minimum": 0
+            },
+            "plannedAmount": {
+              "type": "number",
+              "minimum": 0
+            },
+            "actual_amount": {
+              "type": "number",
+              "minimum": 0
+            },
+            "actualAmount": {
+              "type": "number",
+              "minimum": 0
+            },
+            "currency": {
+              "type": "string",
+              "minLength": 3,
+              "maxLength": 3
+            }
+          }
+        },
+        "target_type": {
+          "type": "string",
+          "enum": [
+            "lead",
+            "supplier",
+            "order"
+          ]
+        },
+        "targetType": {
+          "type": "string",
+          "enum": [
+            "lead",
+            "supplier",
+            "order"
+          ]
+        },
+        "target_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "targetIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "thresholds": {
+          "type": "object",
+          "properties": {
+            "at_risk_delay_percent": {
+              "type": "number",
+              "default": 5
+            },
+            "atRiskDelayPercent": {
+              "type": "number"
+            },
+            "delayed_percent": {
+              "type": "number",
+              "default": 15
+            },
+            "delayedPercent": {
+              "type": "number"
+            },
+            "budget_overrun_vs_progress_percent": {
+              "type": "number",
+              "default": 10
+            },
+            "budgetOverrunVsProgressPercent": {
+              "type": "number"
+            }
+          }
+        },
+        "source": {
+          "type": "object"
         }
-      },
-      "required": [
-        "projectId"
-      ]
+      }
     },
     "outputSchema": {
       "type": "object",
+      "required": [
+        "project_id",
+        "projectId",
+        "status",
+        "severity",
+        "completionPercent",
+        "milestonesCompleted",
+        "milestonesTotal",
+        "budgetUsedPercent",
+        "risk_reasons",
+        "targetType",
+        "targetIds",
+        "audit",
+        "data_quality"
+      ],
       "properties": {
+        "project_id": {
+          "type": "string"
+        },
+        "projectId": {
+          "type": "string"
+        },
+        "organization_id": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "at_risk",
+            "delayed"
+          ]
+        },
+        "severity": {
+          "type": "string",
+          "enum": [
+            "medium",
+            "high"
+          ]
+        },
+        "summary": {
+          "type": "string"
+        },
         "completionPercent": {
           "type": "number"
         },
@@ -686,15 +1212,37 @@
           "type": "integer"
         },
         "budgetUsedPercent": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "schedule_variance_percent": {
           "type": "number"
         },
-        "status": {
-          "type": "string",
-          "enum": [
-            "on_track",
-            "at_risk",
-            "delayed"
+        "timeline_elapsed_percent": {
+          "type": "number"
+        },
+        "budget_used_percent": {
+          "type": [
+            "number",
+            "null"
           ]
+        },
+        "risk_reasons": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "milestone_summary": {
+          "type": "object"
+        },
+        "recommended_actions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         },
         "targetType": {
           "type": "string",
@@ -709,6 +1257,26 @@
           "items": {
             "type": "string"
           }
+        },
+        "target_type": {
+          "type": "string",
+          "enum": [
+            "lead",
+            "supplier",
+            "order"
+          ]
+        },
+        "target_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "audit": {
+          "type": "object"
+        },
+        "data_quality": {
+          "type": "object"
         }
       }
     },
@@ -931,6 +1499,20 @@
     "outputSchema": {
       "type": "object",
       "properties": {
+        "plant_id": {
+          "type": "string"
+        },
+        "plantId": {
+          "type": "string"
+        },
+        "period": {
+          "type": "string",
+          "enum": [
+            "daily",
+            "weekly",
+            "monthly"
+          ]
+        },
         "kpis": {
           "type": "array",
           "items": {
@@ -951,8 +1533,102 @@
             }
           }
         },
+        "organization_id": {
+          "type": "string"
+        },
+        "organizationId": {
+          "type": "string"
+        },
+        "project_id": {
+          "type": "string"
+        },
         "projectId": {
           "type": "string"
+        },
+        "project_name": {
+          "type": "string"
+        },
+        "projectName": {
+          "type": "string"
+        },
+        "as_of_date": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "asOfDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "planned_start_date": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "plannedStartDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "planned_end_date": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "plannedEndDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "planned_progress_percent": {
+          "type": "number"
+        },
+        "plannedProgressPercent": {
+          "type": "number"
+        },
+        "actual_progress_percent": {
+          "type": "number"
+        },
+        "actualProgressPercent": {
+          "type": "number"
+        },
+        "milestones": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "budget": {
+          "type": "object"
+        },
+        "target_type": {
+          "type": "string",
+          "enum": [
+            "lead",
+            "supplier",
+            "order"
+          ]
+        },
+        "targetType": {
+          "type": "string",
+          "enum": [
+            "lead",
+            "supplier",
+            "order"
+          ]
+        },
+        "target_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "targetIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "thresholds": {
+          "type": "object"
+        },
+        "source": {
+          "type": "object"
         }
       }
     },
@@ -1070,6 +1746,9 @@
             "weekly",
             "monthly"
           ]
+        },
+        "source": {
+          "type": "string"
         }
       }
     },
@@ -1251,6 +1930,9 @@
           "items": {
             "type": "string"
           }
+        },
+        "origin": {
+          "type": "string"
         }
       }
     },

@@ -482,7 +482,6 @@
       "triggerCondition": "projectedImprovement > 0.02",
       "description": "Resultado de simulación con mejora > 2% activa optimización global"
     },
-
     {
       "id": "rule-maint-001",
       "sourceToolId": "execute_condition_monitoring",
@@ -533,7 +532,6 @@
       "triggerCondition": "always",
       "description": "KPIs de mantenimiento alimentan el modelo de ciclo de vida del activo"
     },
-
     {
       "id": "rule-scada-001",
       "sourceToolId": "monitor_scada_tags",
@@ -584,7 +582,6 @@
       "triggerCondition": "recordsStored > 1000",
       "description": "Datos históricos acumulados se envían al cloud para análisis de desempeño de lazos"
     },
-
     {
       "id": "rule-qual-001",
       "sourceToolId": "collect_quality_measurements",
@@ -625,7 +622,6 @@
       "triggerCondition": "cpk < 1.33 OR status == 'not_capable'",
       "description": "Capacidad de proceso por debajo del objetivo activa revisión de especificaciones"
     },
-
     {
       "id": "rule-energy-001",
       "sourceToolId": "monitor_energy_meters",
@@ -676,7 +672,6 @@
       "triggerCondition": "periodDays == 90",
       "description": "Cierre de periodo trimestral genera reporte de revisión ISO 50001 automáticamente"
     },
-
     {
       "id": "rule-hse-001",
       "sourceToolId": "monitor_gas_sensors",
@@ -727,7 +722,6 @@
       "triggerCondition": "status == 'closed'",
       "description": "Cierre de permiso de trabajo actualiza los KPIs de seguridad del período"
     },
-
     {
       "id": "rule-scm-001",
       "sourceToolId": "scan_incoming_material",
@@ -779,124 +773,124 @@
       "description": "Proveedor clasificado como condicional o descalificado genera reporte de desempeño de entrega"
     },
     {
-        "id": "rule-pkg-001",
-        "sourceToolId": "inspect_product_quality",
-        "targetToolId": "manage_nonconformances",
-        "event": "DEFECT_FOUND",
-        "protocol": "REST",
-        "topic": "POST /api/quality/nc/create",
-        "triggerCondition": "defectFound == true",
-        "description": "Defecto confirmado en inspección abre una no conformidad"
-  },
+      "id": "rule-pkg-001",
+      "sourceToolId": "inspect_product_quality",
+      "targetToolId": "manage_nonconformances",
+      "event": "DEFECT_FOUND",
+      "protocol": "REST",
+      "topic": "POST /api/quality/nc/create",
+      "triggerCondition": "defectFound == true",
+      "description": "Defecto confirmado en inspección abre una no conformidad"
+    },
     {
-        "id": "rule-pkg-002",
-        "sourceToolId": "analyze_failure_modes",
-        "targetToolId": "manage_nonconformances",
-        "event": "FMEA_CRITICAL_FOUND",
-        "protocol": "REST",
-        "topic": "POST /api/quality/nc/create",
-        "triggerCondition": "criticalItems > 0",
-        "description": "Modo de falla crítico (FMEA) levanta una no conformidad preventiva"
-  },
+      "id": "rule-pkg-002",
+      "sourceToolId": "analyze_failure_modes",
+      "targetToolId": "manage_nonconformances",
+      "event": "FMEA_CRITICAL_FOUND",
+      "protocol": "REST",
+      "topic": "POST /api/quality/nc/create",
+      "triggerCondition": "criticalItems > 0",
+      "description": "Modo de falla crítico (FMEA) levanta una no conformidad preventiva"
+    },
     {
-        "id": "rule-pkg-003",
-        "sourceToolId": "generate_8d_report",
-        "targetToolId": "automate_followups",
-        "event": "8D_REPORT_ISSUED",
-        "protocol": "REST",
-        "topic": "POST /api/quality/followups",
-        "triggerCondition": "always",
-        "description": "Reporte 8D emitido agenda seguimientos hasta el cierre de la acción"
-  },
+      "id": "rule-pkg-003",
+      "sourceToolId": "generate_8d_report",
+      "targetToolId": "automate_followups",
+      "event": "8D_REPORT_ISSUED",
+      "protocol": "REST",
+      "topic": "POST /api/quality/followups",
+      "triggerCondition": "always",
+      "description": "Reporte 8D emitido agenda seguimientos hasta el cierre de la acción"
+    },
     {
-        "id": "rule-pkg-004",
-        "sourceToolId": "manage_device_registry",
-        "targetToolId": "run_msa_analysis",
-        "event": "NEW_DEVICE_REGISTERED",
-        "protocol": "REST",
-        "topic": "POST /api/quality/msa/run",
-        "triggerCondition": "operation == 'register'",
-        "description": "Equipo de medición registrado dispara estudio MSA (Gage R&R)"
-  },
+      "id": "rule-pkg-004",
+      "sourceToolId": "manage_device_registry",
+      "targetToolId": "run_msa_analysis",
+      "event": "NEW_DEVICE_REGISTERED",
+      "protocol": "REST",
+      "topic": "POST /api/quality/msa/run",
+      "triggerCondition": "operation == 'register'",
+      "description": "Equipo de medición registrado dispara estudio MSA (Gage R&R)"
+    },
     {
-        "id": "rule-pkg-005",
-        "sourceToolId": "run_msa_analysis",
-        "targetToolId": "calculate_control_charts",
-        "event": "MSA_VALIDATED",
-        "protocol": "REST",
-        "topic": "POST /api/quality/spc/update",
-        "triggerCondition": "verdict == 'acceptable'",
-        "description": "Sistema de medición validado habilita el cálculo confiable de cartas de control"
-  },
+      "id": "rule-pkg-005",
+      "sourceToolId": "run_msa_analysis",
+      "targetToolId": "calculate_control_charts",
+      "event": "MSA_VALIDATED",
+      "protocol": "REST",
+      "topic": "POST /api/quality/spc/update",
+      "triggerCondition": "verdict == 'acceptable'",
+      "description": "Sistema de medición validado habilita el cálculo confiable de cartas de control"
+    },
     {
-        "id": "rule-pkg-006",
-        "sourceToolId": "collect_quality_measurements",
-        "targetToolId": "calculate_cpk_ppk",
-        "event": "MEASUREMENTS_CAPTURED",
-        "protocol": "REST",
-        "topic": "POST /api/quality/capability",
-        "triggerCondition": "defectsFound >= 0",
-        "description": "Mediciones capturadas alimentan el cálculo de capacidad de proceso (Cpk/Ppk)"
-  },
+      "id": "rule-pkg-006",
+      "sourceToolId": "collect_quality_measurements",
+      "targetToolId": "calculate_cpk_ppk",
+      "event": "MEASUREMENTS_CAPTURED",
+      "protocol": "REST",
+      "topic": "POST /api/quality/capability",
+      "triggerCondition": "defectsFound >= 0",
+      "description": "Mediciones capturadas alimentan el cálculo de capacidad de proceso (Cpk/Ppk)"
+    },
     {
-        "id": "rule-pkg-007",
-        "sourceToolId": "manage_product_specs",
-        "targetToolId": "collect_quality_measurements",
-        "event": "PRODUCT_SPEC_UPDATED",
-        "protocol": "REST",
-        "topic": "POST /api/quality/measurements",
-        "triggerCondition": "always",
-        "description": "Spec actualizada redefine el plan de inspección y la captura de mediciones"
-  },
+      "id": "rule-pkg-007",
+      "sourceToolId": "manage_product_specs",
+      "targetToolId": "collect_quality_measurements",
+      "event": "PRODUCT_SPEC_UPDATED",
+      "protocol": "REST",
+      "topic": "POST /api/quality/measurements",
+      "triggerCondition": "always",
+      "description": "Spec actualizada redefine el plan de inspección y la captura de mediciones"
+    },
     {
-        "id": "rule-pkg-008",
-        "sourceToolId": "compare_planned_vs_actual",
-        "targetToolId": "generate_kpis",
-        "event": "PRODUCTION_VARIANCE_DETECTED",
-        "protocol": "REST",
-        "topic": "POST /api/mgmt/kpis",
-        "triggerCondition": "always",
-        "description": "Variación plan vs real alimenta el tablero de KPIs de Revisión por Dirección"
-  },
+      "id": "rule-pkg-008",
+      "sourceToolId": "compare_planned_vs_actual",
+      "targetToolId": "generate_kpis",
+      "event": "PRODUCTION_VARIANCE_DETECTED",
+      "protocol": "REST",
+      "topic": "POST /api/mgmt/kpis",
+      "triggerCondition": "status != 'not_calculable'",
+      "description": "Variacion plan vs real calculable alimenta el tablero de KPIs de Revision por Direccion"
+    },
     {
-        "id": "rule-pkg-009",
-        "sourceToolId": "compare_planned_vs_actual",
-        "targetToolId": "detect_business_anomalies",
-        "event": "PRODUCTION_VARIANCE_DETECTED",
-        "protocol": "REST",
-        "topic": "POST /api/mgmt/anomalies",
-        "triggerCondition": "always",
-        "description": "Variación de producción se envía al detector de anomalías de negocio"
-  },
+      "id": "rule-pkg-009",
+      "sourceToolId": "compare_planned_vs_actual",
+      "targetToolId": "detect_business_anomalies",
+      "event": "PRODUCTION_VARIANCE_DETECTED",
+      "protocol": "REST",
+      "topic": "POST /api/mgmt/anomalies",
+      "triggerCondition": "status IN ['deviation','critical']",
+      "description": "Desviacion o variacion critica se envia al detector de anomalias de negocio"
+    },
     {
-        "id": "rule-pkg-010",
-        "sourceToolId": "detect_business_anomalies",
-        "targetToolId": "generate_kpis",
-        "event": "BUSINESS_ANOMALY_DETECTED",
-        "protocol": "REST",
-        "topic": "POST /api/mgmt/kpis",
-        "triggerCondition": "criticalCount > 0",
-        "description": "Anomalía de negocio crítica se refleja en los KPIs de dirección"
-  },
+      "id": "rule-pkg-010",
+      "sourceToolId": "detect_business_anomalies",
+      "targetToolId": "generate_kpis",
+      "event": "BUSINESS_ANOMALY_DETECTED",
+      "protocol": "REST",
+      "topic": "POST /api/mgmt/kpis",
+      "triggerCondition": "criticalCount > 0",
+      "description": "Anomalía de negocio crítica se refleja en los KPIs de dirección"
+    },
     {
-        "id": "rule-pkg-011",
-        "sourceToolId": "generate_kpis",
-        "targetToolId": "track_project_progress",
-        "event": "KPI_REPORT_GENERATED",
-        "protocol": "REST",
-        "topic": "POST /api/mgmt/progress",
-        "triggerCondition": "always",
-        "description": "KPIs generados actualizan el avance del proyecto de implementación ISO"
-  },
+      "id": "rule-pkg-011",
+      "sourceToolId": "generate_kpis",
+      "targetToolId": "track_project_progress",
+      "event": "KPI_REPORT_GENERATED",
+      "protocol": "REST",
+      "topic": "POST /api/mgmt/progress",
+      "triggerCondition": "always",
+      "description": "KPIs generados actualizan el avance del proyecto de implementación ISO"
+    },
     {
-        "id": "rule-pkg-012",
-        "sourceToolId": "track_project_progress",
-        "targetToolId": "automate_followups",
-        "event": "PROJECT_AT_RISK",
-        "protocol": "REST",
-        "topic": "POST /api/mgmt/followups",
-        "triggerCondition": "status == 'at_risk'",
-        "description": "Proyecto en riesgo agenda seguimientos automáticos con los responsables"
-  }
+      "id": "rule-pkg-012",
+      "sourceToolId": "track_project_progress",
+      "targetToolId": "automate_followups",
+      "event": "PROJECT_AT_RISK",
+      "protocol": "REST",
+      "topic": "POST /api/mgmt/followups",
+      "triggerCondition": "status == 'at_risk'",
+      "description": "Proyecto en riesgo agenda seguimientos automáticos con los responsables"
+    }
   ]
 }

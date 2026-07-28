@@ -12,6 +12,8 @@ export const meta = {
 
 export function handler (event) {
   const input = event.data || {};
+  const ids = Array.isArray(input.target_ids) ? input.target_ids : input.targetIds;
+  const firstTargetId = Array.isArray(ids) ? ids[0] : null;
   return {
     event: { type: 'FOLLOWUP_SCHEDULED', category: 'system', severity: 'low' },
     asset: event.asset,
@@ -19,7 +21,7 @@ export function handler (event) {
       sent: 3,
       failed: 0,
       scheduledIds: ['FUP-001', 'FUP-002', 'FUP-003'],
-      origin: input.reportId || input.projectId || 'auto'
+      origin: input.report_id || input.reportId || input.project_id || input.projectId || firstTargetId || 'auto'
     }
   };
 }
