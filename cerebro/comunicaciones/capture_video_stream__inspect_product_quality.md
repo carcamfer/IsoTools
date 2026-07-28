@@ -38,9 +38,10 @@ tags: [comunicacion, FRAME_CAPTURED]
      Así el programador del otro lado ve qué cambió sin leer el código.
      Formato:  - [YYYY-MM-DD] (quién) qué cambió en el payload/condición y por qué -->
 - [2026-06-28] (auto) nota inicial generada desde communication-rules.json.
+- [2026-07-27] (Carlos) **`inspect_product_quality` pasa a dueño EXTERNO.** Se retiró el handler nativo y **se eliminó la regla `rule-vision-001`**: el bus ya no hace nada al recibir `FRAME_CAPTURED` para inspección. Esta comunicación ya **no la ejecuta la plataforma** — el servicio externo consume `FRAME_CAPTURED` por `GET /api/v1/events` y publica `DEFECT_FOUND` por `POST /api/v1/events`.
 
 ## Flujo de trabajo
 1. `npm run rama:comm capture_video_stream__inspect_product_quality` (crea/cambia a la rama `comm/capture_video_stream__inspect_product_quality`).
 2. Implementa el cambio en ambas tools si aplica y actualiza esta bitácora.
-3. PR de la rama a `main` cuando el contrato quede estable.
+3. PR de la rama a `feature/filter` cuando el contrato quede estable.
 

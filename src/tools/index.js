@@ -11,7 +11,9 @@
 // El `meta.id` debe coincidir con el `targetToolId`/`sourceToolId` de las reglas,
 // y `meta.produces`/`meta.consumes` con los `event` de esas reglas.
 // ─────────────────────────────────────────────────────────────────────────────
-import * as inspectProductQuality from './inspect_product_quality.js';
+// inspect_product_quality: retirado del bus nativo — ahora lo implementa un
+// servicio EXTERNO que publica DEFECT_FOUND por la API. Se quitó para no
+// inspeccionar el mismo frame dos veces (placeholder nativo + runner externo).
 import * as collectQualityMeasurements from './collect_quality_measurements.js';
 import * as calculateControlCharts from './calculate_control_charts.js';
 // detect_out_of_control_signals: retirado del bus nativo — ahora lo implementa
@@ -33,7 +35,6 @@ import * as trackProjectProgress from './track_project_progress.js';
 // el mismo seguimiento dos veces (placeholder nativo + runner externo).
 
 const TOOLS = [
-  inspectProductQuality,
   collectQualityMeasurements,
   calculateControlCharts,
   manageNonconformances,

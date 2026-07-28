@@ -35,9 +35,26 @@ Ejemplo real (escenario "mediciones"):
      ⋮   publica FOLLOWUP_SCHEDULED, que es terminal: nadie reacciona a él)
 ```
 
+Escenario "defecto de visión" (el mismo patrón: la raíz la publica el externo):
+
+```
+     ⋮  (inspect_product_quality tampoco corre en el bus. El servicio externo
+     ⋮   consume FRAME_CAPTURED y publica DEFECT_FOUND con POST /api/v1/events)
+     ▼
+┌─ [raíz] DEFECT_FOUND  (lo publica el servicio externo, con data.defectFound = true)
+├─ manage_nonconformances          →  NC_REQUIRES_8D            [rule-pkg-001]
+└─ analyze_visual_patterns         →  (sin handler nativo)      [rule-vision-004]
+```
+
 > **Tools con dueño EXTERNO** (no están en `src/tools/`, no las ejecuta el bus):
-> `detect_out_of_control_signals` y `automate_followups`. Si vuelves a registrar
-> un handler nativo para ellas, el mismo hecho se procesará dos veces.
+> `detect_out_of_control_signals`, `automate_followups` e
+> `inspect_product_quality`. Si vuelves a registrar un handler nativo para
+> alguna, el mismo hecho se procesará dos veces.
+>
+> Como el bus ya no las ejecuta, **la condición de disparo de sus reglas de
+> salida la tiene que cumplir el payload del externo**: `rule-pkg-001` exige
+> `data.defectFound == true` en el `DEFECT_FOUND` que publiques, o no se abre
+> la no conformidad.
 
 ---
 

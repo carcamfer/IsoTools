@@ -30,3 +30,10 @@ Registro cronológico de cambios significativos en el vault. Una línea por even
 - **Cómo identificarlos en una auditoría:** son los `FOLLOWUP_SCHEDULED` con `seq` entre 56 y 64. Su `timestamp` es del 2026-07-27, pero el `causation_id` apunta a eventos padre muy anteriores — esa discrepancia es la huella del reproceso.
 - **Efecto residual:** `GET /api/v1/events/latest?type=FOLLOWUP_SCHEDULED` devuelve el seq 64 como "el último seguimiento" hasta que entre uno legítimo más nuevo.
 - **Acción correctiva:** ver arriba (retiro del placeholder nativo + documentación del arranque en frío). No se requiere acción sobre los datos.
+
+## [2026-07-27] inspect_product_quality sale del bus nativo
+- Misma tool externa (`tool-vision-followups`) se hace cargo también de la inspección de visión. Se eliminó `src/tools/inspect_product_quality.js` y la regla `rule-vision-001` (`FRAME_CAPTURED` → inspección).
+- **Se conservan** las reglas donde la tool es FUENTE: `rule-pkg-001` (`DEFECT_FOUND` → `manage_nonconformances`) y `rule-vision-004` (→ `analyze_visual_patterns`). Cuando el externo publica `DEFECT_FOUND`, el bus abre UNA sola NC.
+- ⚠️ **Riesgo asumido y comunicado:** la plataforma ya no genera `DEFECT_FOUND` por su cuenta. Si el servicio externo deja de publicarlo, **se apagan las NCs de inspección**. No hay red de seguridad nativa.
+- ⚠️ **Contrato para el externo:** el `data` de `DEFECT_FOUND` debe incluir `defectFound: true`; esa condición la evalúa el bus sobre el payload publicado (`rule-pkg-001`).
+- Con esto son 3 las tools con dueño externo: `detect_out_of_control_signals`, `automate_followups` e `inspect_product_quality`. Todas siguen en `tools.json` para poder usar `/events/subscriptions/:toolId`.

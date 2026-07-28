@@ -163,16 +163,6 @@
       "description": "Rutas críticas encontradas disparan segmentación preventiva"
     },
     {
-      "id": "rule-vision-001",
-      "sourceToolId": "capture_video_stream",
-      "targetToolId": "inspect_product_quality",
-      "event": "FRAME_CAPTURED",
-      "protocol": "Internal",
-      "topic": "edge/vision/frame",
-      "triggerCondition": "always",
-      "description": "Cada frame capturado se pasa al inspector de calidad"
-    },
-    {
       "id": "rule-vision-002",
       "sourceToolId": "capture_video_stream",
       "targetToolId": "detect_safety_violations",
