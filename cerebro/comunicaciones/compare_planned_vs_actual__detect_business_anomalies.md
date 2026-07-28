@@ -7,12 +7,12 @@ evento: PRODUCTION_VARIANCE_DETECTED
 protocolo: REST
 rama: comm/compare_planned_vs_actual__detect_business_anomalies
 programadores:
-actualizado: 2026-06-28
+actualizado: 2026-07-23
 tags: [comunicacion, PRODUCTION_VARIANCE_DETECTED]
 ---
-# compare_planned_vs_actual → detect_business_anomalies
+# compare_planned_vs_actual -> detect_business_anomalies
 
-> Regla `rule-pkg-009` · evento `PRODUCTION_VARIANCE_DETECTED` · protocolo REST
+> Regla `rule-pkg-009` - evento `PRODUCTION_VARIANCE_DETECTED` - protocolo REST
 > Rama de trabajo: `comm/compare_planned_vs_actual__detect_business_anomalies`
 
 ## Las dos tools
@@ -22,25 +22,50 @@ tags: [comunicacion, PRODUCTION_VARIANCE_DETECTED]
 ## Contrato
 - **Evento:** `PRODUCTION_VARIANCE_DETECTED`
 - **Protocolo / topic:** REST `POST /api/mgmt/anomalies`
-- **Condición de disparo:** `always`
-- **Descripción:** Variación de producción se envía al detector de anomalías de negocio
+- **Condicion de disparo:** `status IN ['deviation','critical']`
+- **Descripcion:** Desviacion o variacion critica se envia al detector de anomalias de negocio
 
-## Forma del payload (rellenar al implementar)
+## Forma del payload
 ```json
 {
-  "event": { "type": "PRODUCTION_VARIANCE_DETECTED" },
-  "data": { }
+  "event": {
+    "type": "PRODUCTION_VARIANCE_DETECTED",
+    "category": "erp",
+    "severity": "medium|high"
+  },
+  "data": {
+    "analysis_type": "planned_vs_actual",
+    "domain": "production",
+    "plant_id": "plant_01",
+    "period": "monthly",
+    "metrics": ["SCRAP"],
+    "status": "deviation|critical",
+    "details": {
+      "metrics": [
+        {
+          "metric_id": "SCRAP",
+          "planned": 2,
+          "actual": 3,
+          "unit": "percent",
+          "direction": "lower_is_better",
+          "status": "critical"
+        }
+      ]
+    },
+    "audit": {},
+    "data_quality": {}
+  }
 }
 ```
 
-## Bitácora de la comunicación
-<!-- Cada cambio en el contrato entre estas dos tools se anota aquí.
-     Así el programador del otro lado ve qué cambió sin leer el código.
-     Formato:  - [YYYY-MM-DD] (quién) qué cambió en el payload/condición y por qué -->
+## Bitacora de la comunicacion
+<!-- Cada cambio en el contrato entre estas dos tools se anota aqui.
+     Asi el programador del otro lado ve que cambio sin leer el codigo.
+     Formato:  - [YYYY-MM-DD] (quien) que cambio en el payload/condicion y por que -->
 - [2026-06-28] (auto) nota inicial generada desde communication-rules.json.
+- [2026-07-23] (codex) La condicion cambia de `always` a `status IN ['deviation','critical']`; `detect_business_anomalies` lee `details.metrics` para derivar anomalias sin depender de constantes.
 
 ## Flujo de trabajo
 1. `npm run rama:comm compare_planned_vs_actual__detect_business_anomalies` (crea/cambia a la rama `comm/compare_planned_vs_actual__detect_business_anomalies`).
-2. Implementa el cambio en ambas tools si aplica y actualiza esta bitácora.
-3. PR de la rama a `main` cuando el contrato quede estable.
-
+2. Implementa el cambio en ambas tools si aplica y actualiza esta bitacora.
+3. PR de la rama a `feature/filter` cuando el contrato quede estable.

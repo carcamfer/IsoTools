@@ -8,31 +8,81 @@ estado: implementada
 consume: [KPI_REPORT_GENERATED]
 produce: [PROJECT_AT_RISK]
 programador:
-actualizado: 2026-06-28
+actualizado: 2026-07-23
 tags: [tool, erp, implementada]
 ---
 # Rastrear Progreso de Proyectos
-> `track_project_progress` · Cloud · categoría **erp** · estado **implementada**
-> Pertenece al agente [[../agentes/erp-gestion-empresarial|Agente ERP & Gestión Empresarial]]
-## Qué hace
-Monitorea el avance de proyectos industriales, hitos cumplidos y recursos utilizados.
+> `track_project_progress` - Cloud - categoria **erp** - estado **implementada**
+> Pertenece al agente [[../agentes/erp-gestion-empresarial|Agente ERP & Gestion Empresarial]]
+
+## Que hace
+Evalua avance planificado contra real, hitos y presupuesto para emitir `PROJECT_AT_RISK` solo cuando el proyecto esta en riesgo o retrasado.
+
 ## Contrato de eventos
 - **Consume:** `KPI_REPORT_GENERATED`
 - **Produce:** `PROJECT_AT_RISK`
-## Notas de implementación (tools-dev-spec)
-**Por qué estos inputs:** projectId es el único parámetro necesario porque el agente consulta toda la información del proyecto (hitos, tareas, presupuesto, recursos) a partir de ese ID. Esto permite que el agente genere reportes de status automáticos sin que el operador tenga que especificar qué métricas quiere ver.
 
-**Cálculos:** Consultar todos los entregables y hitos del proyecto en la BD de gestión. Calcular completionPercent como (tareas completadas / total de tareas) × 100. Calcular budgetUsedPercent como (gasto real acumulado / presupuesto total) × 100. Determinar status comparando completionPercent y budgetUsedPercent con el progreso esperado a la fecha.
+## Contrato de entrada
+Contrato principal en `snake_case`:
+- `organization_id`
+- `project_id`
+- `project_name`
+- `as_of_date`
+- `planned_start_date`
+- `planned_end_date`
+- `planned_progress_percent`
+- `actual_progress_percent`
+- `milestones[]` opcional
+- `budget` opcional
+- `target_type` y `target_ids` opcionales
+- `thresholds` opcional
+- `source` opcional
 
-**Por qué estos outputs:** completionPercent es el indicador principal para reportes a stakeholders. milestonesCompleted/Total permite identificar si el proyecto está en riesgo de completar hitos clave a tiempo. budgetUsedPercent combinado con completionPercent detecta sobreejercicio del presupuesto.
+Lectura legacy aceptada:
+- `organizationId`, `projectId`, `projectName`
+- `asOfDate`, `plannedStartDate`, `plannedEndDate`
+- `plannedProgressPercent`, `actualProgressPercent`
+- `targetType`, `targetIds`
 
-**Sugerencia de UI:** Dashboard de proyecto con dos gauges: Avance físico y Avance presupuestal. Timeline de hitos con íconos de completado/en-progreso/pendiente. Indicador de salud del proyecto (En tiempo / En riesgo / Retrasado) con semáforo de color.
+## Contrato de salida
+La tool emite evento solo cuando `status` es `at_risk` o `delayed`. Para `on_track` o `not_calculable`, devuelve `null`.
+
+Campos emitidos en `PROJECT_AT_RISK`:
+- `project_id`
+- `projectId`
+- `organization_id`
+- `completionPercent`
+- `milestonesCompleted`
+- `milestonesTotal`
+- `budgetUsedPercent`
+- `status`
+- `severity`
+- `risk_reasons`
+- `targetType`
+- `targetIds`
+- `target_type`
+- `target_ids`
+- `audit`
+- `data_quality`
+
+`status` emitible: `at_risk`, `delayed`.
+
+## Notas de implementacion
+- No se introduce `PROJECT_PROGRESS_UPDATED` en V1.
+- `rule-pkg-012` conserva `status == 'at_risk'`; `delayed` se emite como `PROJECT_AT_RISK` pero no agenda followups en V1.
+- Si faltan evidencias obligatorias, la tool calcula `not_calculable` internamente y devuelve `null`.
+- `targetType` usa `order` por defecto y `targetIds` usa `project_id` si no se reciben valores explicitos.
+- `category` se mantiene como `erp` por catalogo/agente. Esto diverge del IES estricto, donde las categorias validas no incluyen `erp`; la decision queda documentada para no tocar `event-standard.json` en V1.
+
 ## Comunicaciones
 **Esta tool dispara a:**
-- [[../comunicaciones/track_project_progress__automate_followups]] — `PROJECT_AT_RISK` → [[automate_followups]]
+- [[../comunicaciones/track_project_progress__automate_followups]] - `PROJECT_AT_RISK` -> [[automate_followups]]
+
 **Esta tool es disparada por:**
-- [[generate_kpis]] — `KPI_REPORT_GENERATED` → [[../comunicaciones/generate_kpis__track_project_progress]]
-## Bitácora de cambios
-<!-- Anota aquí cada cambio de contrato/lógica que pueda afectar a otras tools.
-     Formato sugerido:  - [YYYY-MM-DD] (tu-nombre) qué cambió y a quién afecta -->
-- [2026-06-28] (auto) nota inicial generada desde la configuración.
+- [[generate_kpis]] - `KPI_REPORT_GENERATED` -> [[../comunicaciones/generate_kpis__track_project_progress]]
+
+## Bitacora de cambios
+<!-- Anota aqui cada cambio de contrato/logica que pueda afectar a otras tools.
+     Formato sugerido:  - [YYYY-MM-DD] (tu-nombre) que cambio y a quien afecta -->
+- [2026-06-28] (auto) nota inicial generada desde la configuracion.
+- [2026-07-23] (codex) Importacion V1 productizable: calculo real de avance, hitos y presupuesto; `null` para `on_track`/`not_calculable`; salida `PROJECT_AT_RISK` con `targetType` y `targetIds`.
