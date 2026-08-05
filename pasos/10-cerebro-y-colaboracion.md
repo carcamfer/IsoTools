@@ -95,7 +95,7 @@ Sí, **pero solo después de que hagas `push`**:
 rama comm/...  →  PR  →  merge a main  →  Railway redespliega solo
 ```
 
-- Mientras estés en tu rama `comm/...`, **nada toca producción**. Pruebas en local (Docker) y, si quieres integrar con tools de otros antes de mergear, contra la API central (paso 2).
+- Mientras estés en tu rama `comm/...`, **nada toca producción**. Pruebas contra la plataforma central con tu API key (paso 2); `main` no se ve afectada hasta el merge.
 - **Cuando el contrato cerró** (10.4) y el PR pasa la checklist (paso 9) → **merge a `main`**.
 - Ese merge dispara el **auto-deploy de Railway** (paso 2 §2.3). No hay un botón extra que apretar.
 

@@ -2,6 +2,8 @@
 
 > [⬅ Volver al roadmap](../README.md)
 
+> **⚠️ Este paso es solo para tools NATIVAS (admin/core).** Aplica únicamente si tu tool vive **dentro de este repo** y la corre el bus. Si tu tool es **externa** (lo normal), no escribes ningún handler aquí: publicas y consumes por la API. Ver el [Manual de integración del README](../README.md#manual-de-integración-publicar-y-consumir-eventos) y el banner del [Paso 1](./01-vision-general.md).
+
 ## Qué vas a lograr en este paso
 
 Ver el **esqueleto exacto** de una tool y las 7 reglas que tu `handler` debe cumplir. Al terminar tendrás un archivo `.js` que el bus puede ejecutar sin modificaciones adicionales.
@@ -24,7 +26,7 @@ A diferencia de versiones anteriores de este manual, la capa de ejecución **ya 
 | Cadena causal `correlation_id` + `causation_id` | ✅ Columnas en `industrial_events` + endpoint `GET /api/v1/events/chain/:correlationId`. |
 | Bus auto-rellena `event_id`/`timestamp`/`module`/`correlation_id`/`causation_id` | ✅ Lo hace `eventBus.buildChildEvent`. |
 
-> **Pruébalo ya:** con la API local levantada, `npm run sim:iso` dispara una cadena completa. Ver [Paso 8](./08-pruebas-locales.md) y `docs/SIMULACION_PASO_A_PASO.md`.
+> **Pruébalo ya:** con tu `API_KEY` y `API_BASE_URL` apuntando a la plataforma central, `npm run sim:iso` dispara una cadena completa. Ver [Paso 8](./08-pruebas-locales.md) y `docs/SIMULACION_PASO_A_PASO.md`.
 
 **Qué haces cuando agregas tu tool** (de verdad corre, no es aire):
 

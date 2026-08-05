@@ -16,7 +16,7 @@ Se comunican **solo por HTTP**. Nada de imports cruzados, nada de dependencias c
 ## 🚀 Empieza aquí según quién seas
 
 - **Tienes tu propia tool y quieres conectarla** (publicar/consumir eventos) → **[Manual de integración](#manual-de-integración-publicar-y-consumir-eventos)**, más abajo. Ahí está el contrato completo: payloads, endpoints, filtros y ejemplos.
-- **Vas a programar una tool por primera vez** → sigue el roadmap paso a paso en **[`pasos/`](./pasos/)** (1 → 10, sin saltarte ninguno).
+- **Vas a programar una tool por primera vez** → lo normal es una **tool externa**: vive en **tu propio repo**, en cualquier lenguaje, y solo habla con la plataforma por HTTP. Tu guía completa es el **[Manual de integración](#manual-de-integración-publicar-y-consumir-eventos)** (más abajo). **No clonas este repo, no escribes en `src/tools/`, no haces PR de código.** El roadmap de **[`pasos/`](./pasos/)** (1 → 10) describe el caso especial de una **tool nativa dentro de este repo** (el paquete de referencia que corre el bus), tarea del admin/core — no lo necesitas para una tool externa.
 - **Necesitas la referencia técnica** → **[`docs/GUIA_TOOLS.md`](./docs/GUIA_TOOLS.md)** (anatomía del handler, reglas de nombrado IES, comunicación, checklist).
 - **Quieres ver qué hace cada tool y con quién habla** → abre el **[cerebro Obsidian](./cerebro/)** (`cerebro/index.md`). Cómo usarlo y coordinarte con la otra tool: **[`pasos/10-cerebro-y-colaboracion.md`](./pasos/10-cerebro-y-colaboracion.md)**.
 - **Vas a levantar y probar el ambiente** → **[`docs/SIMULACION_PASO_A_PASO.md`](./docs/SIMULACION_PASO_A_PASO.md)**.
@@ -69,26 +69,85 @@ IsoTools/
 
 ---
 
-## Cómo correr el ambiente (local)
+## Vía rápida — tu primer día (todos usan la plataforma central)
 
-```bash
-# 1. Dependencias
-npm install
+**No se corre nada en local.** Todas las tools se conectan a la misma plataforma desplegada en Railway. Memoriza la URL base:
 
-# 2. Postgres + API con Docker Compose
-docker compose --profile api up -d
-
-# 3. Crear una API key
-npm run apikey:create mi-cliente -- --scopes=events:read,events:write
-
-# 4. Probar
-curl http://localhost:3000/api/v1/health
+```
+https://isotools-production.up.railway.app/api/v1
 ```
 
-Servicios: API en `http://localhost:3000`, Postgres en `localhost:5432` (`industrial`/`industrial`).
-Sin Docker: copia `.env.example` → `.env`, ajusta `DATABASE_URL` y corre `npm run dev`.
+Sigue estos pasos **en orden**. El contrato completo (payloads, filtros, ejemplos) está en el [Manual de integración](#manual-de-integración-publicar-y-consumir-eventos), más abajo.
 
-### Scripts útiles
+### Paso 0 — Consigue tu API key (esto es LO PRIMERO)
+
+Sin key, todo `POST`/`GET` de eventos responde `401`. El catálogo y el health son abiertos (no piden key).
+
+1. **Genera tú mismo un secreto aleatorio** y guárdalo (no se vuelve a mostrar):
+   ```bash
+   openssl rand -hex 24        # recomendado
+   # o
+   uuidgen
+   ```
+2. **Pásale al admin (Carlos) dos datos:** el **valor** de la key y el **nombre de tu tool** (el *label*, ej. `tool-vision`).
+3. **El admin la registra** en Railway → servicio **IsoTools** → **Variables**:
+   ```
+   BOOTSTRAP_API_KEY        = <la key que generaste>
+   BOOTSTRAP_API_KEY_LABEL  = <el nombre de tu tool, ej. tool-vision>
+   BOOTSTRAP_API_KEY_SCOPES = events:read,events:write   # opcional
+   ```
+   Al redesplegar, la plataforma inserta tu key (hasheada, nunca en logs). Es idempotente. Después el admin **quita** `BOOTSTRAP_API_KEY` por seguridad.
+4. Listo: ya puedes usar tu key en el header **`x-api-key`**.
+
+> **Scopes:** `events:write` para publicar, `events:read` para consumir. Si tu tool hace ambas (lo normal), pide `events:read,events:write`.
+
+### Paso 1 — Configura tu entorno
+
+```bash
+export CORE_BASE_URL="https://isotools-production.up.railway.app/api/v1"
+export API_KEY="<tu-key-del-paso-0>"
+```
+
+> La key **jamás** va en el frontend ni se commitea: vive en tu servidor / en variables de entorno. Añade `.env*` a tu `.gitignore`.
+
+### Paso 2 — Verifica que estás conectado
+
+```bash
+curl "$CORE_BASE_URL/health"    # -> {"status":"ok"}     (el proceso responde)
+curl "$CORE_BASE_URL/ready"     # -> {"status":"ready"}  (además hay base de datos)
+```
+
+Si `/health` responde pero un `POST` te da `401`, revisa el header `x-api-key` (no `Authorization`) y que la key no tenga saltos de línea.
+
+### Paso 3 — Publica tu primer evento
+
+```bash
+curl -X POST "$CORE_BASE_URL/events" \
+  -H "x-api-key: $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d @sample-event.json
+```
+
+El payload debe cumplir el **Industrial Event Standard (IES)** (ver [§ 3](#3-el-payload-de-entrada-el-sobre-ies); hay un ejemplo listo en [`sample-event.json`](./sample-event.json)). Es **idempotente**: reintentar con el mismo `event_id` responde `200 status:"duplicate"`; un evento nuevo responde `201 status:"accepted"`.
+
+### Paso 4 — Consume (elige el patrón correcto)
+
+Ver [§ 5](#5-consumir-cómo-pedir-solo-los-datos-que-necesitas) para el detalle. En corto:
+
+- **Consumo incremental continuo** → cursor `since_seq` (patrón por defecto).
+- **Última data por tipo** → `/events/latest` (poll barato con ETag/304).
+- **Solo lo que MI tool consume** → `/events/subscriptions/:toolId`.
+- **Trazabilidad** → `/events/chain/:correlationId`.
+
+### Paso 5 — (Solo admin/core) Si vas a escribir un handler NATIVO dentro de este repo
+
+**Esto NO es el camino normal y una tool externa nunca lo necesita.** Aplica solo a las **tools nativas** que la plataforma corre en su propio proceso (el paquete de referencia ISO 9001), tarea del admin/core. Con las tools externas te comunicas con las nativas exactamente igual que con cualquier otra: por evento. Si de verdad vas a escribir una nativa, sigue el roadmap completo en [`pasos/`](./pasos/) (1 → 10): crea `src/tools/<tu_tool_id>.js` (`meta` + `handler`), regístralo en `src/tools/index.js`, declara `consumes`/`produces` en `tools.json`, añade la regla en `communication-rules.json`, prueba y pasa el checklist.
+
+> **¿Qué necesita una tool externa para "comunicarse" con otra?** Nada de lo anterior. Publica su evento (`POST /events`) y consume el tipo que le interesa (`GET /events?type=…`). Ver el [Manual de integración](#manual-de-integración-publicar-y-consumir-eventos). El **auto-disparo** (que otra tool reaccione **sola** al publicar) ocurre únicamente entre tools **nativas** vía el bus; entre tools externas, cada una corre su propio *poll* y trae su reacción codificada.
+
+> **Correr la plataforma tú mismo es tarea exclusiva del admin** (deploy en Railway): ver [`pasos/02` § 2.2](./pasos/02-api-central.md). Los programadores nunca levantan la plataforma.
+
+### Scripts útiles (admin)
 
 | Script | Uso |
 |--------|-----|
@@ -98,6 +157,78 @@ Sin Docker: copia `.env.example` → `.env`, ajusta `DATABASE_URL` y corre `npm 
 | `npm run sim:iso` | Simula la cadena del paquete ISO 9001. |
 | `npm run cerebro:generar` | Crea/actualiza las notas del cerebro Obsidian. |
 | `npm run rama:comm <s>__<t>` | Crea la rama de una comunicación tool↔tool. |
+
+---
+
+## Pruebas rápidas con `curl` (8 pasos)
+
+Ya con tu API key, copia y pega. No corres nada en local: todo pega contra la plataforma central. Guarda la base **sin** `/events`:
+
+```bash
+export CORE_BASE_URL="https://isotools-production.up.railway.app/api/v1"
+export API_KEY="<tu-key>"
+```
+
+**1. ¿Está viva?** (abierto, no pide key)
+```bash
+curl "$CORE_BASE_URL/health"    # -> {"status":"ok"}
+curl "$CORE_BASE_URL/ready"     # -> {"status":"ready"}  (además hay DB)
+```
+
+**2. Descubre el contrato** (abierto): qué tipos existen y quién los mueve.
+```bash
+curl "$CORE_BASE_URL/catalog/events"                        # tipos + productores/consumidores
+curl "$CORE_BASE_URL/catalog/tools/manage_nonconformances"  # consumes/produces de una de las 16
+curl "$CORE_BASE_URL/catalog/event-standard"                # el IES completo
+```
+
+**3. Publica un evento** (`events:write`):
+```bash
+curl -i -X POST "$CORE_BASE_URL/events" \
+  -H "x-api-key: $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "event_id": "test-'"$(openssl rand -hex 6)"'",
+    "timestamp": "2026-07-21T12:00:00.000Z",
+    "platform_version": "2.0",
+    "module": { "id": "mi_tool_de_prueba", "version": "1.0.0" },
+    "asset":  { "asset_id": "TEST-1", "plant_id": "plant_01" },
+    "event":  { "type": "CALIBRATION_FAILED", "category": "quality", "severity": "high" },
+    "data":   { "deviceId": "TEST-1", "priorMeasurementsSuspect": true }
+  }'
+```
+Fíjate en `201 status:"accepted"`, tu `seq` y `triggered` (cuántas tools **nativas** reaccionaron). Como `CALIBRATION_FAILED` dispara a `manage_nonconformances`, verás `triggered: 1` y una `chain`.
+
+**4. Idempotencia**: repite el POST anterior **con el mismo `event_id`** (fíjalo en el `-d`). La 2ª vez responde `200 status:"duplicate"`, `triggered: 0`.
+
+**5. Consume por tipo** (cursor incremental — el patrón real):
+```bash
+curl -H "x-api-key: $API_KEY" \
+  "$CORE_BASE_URL/events?since_seq=0&type=CALIBRATION_FAILED&limit=10"
+# guarda el next_seq y en el siguiente tick úsalo como since_seq=<next_seq>
+```
+
+**6. Última data por tipo** (con ETag/304):
+```bash
+curl -i -H "x-api-key: $API_KEY" \
+  "$CORE_BASE_URL/events/latest?type=CALIBRATION_FAILED"
+# reenvía el ETag -> 304 si no hubo nada nuevo:
+curl -i -H "x-api-key: $API_KEY" -H 'If-None-Match: W/"<seq>"' \
+  "$CORE_BASE_URL/events/latest?type=CALIBRATION_FAILED"
+```
+
+**7. Suscripción "solo lo mío"** (usa un id ya listado en el catálogo):
+```bash
+curl -H "x-api-key: $API_KEY" \
+  "$CORE_BASE_URL/events/subscriptions/manage_nonconformances?since_seq=0&limit=20"
+```
+
+**8. Traza la cadena causal** (usa un `correlation_id` de la respuesta del paso 3):
+```bash
+curl -H "x-api-key: $API_KEY" "$CORE_BASE_URL/events/chain/<correlation_id>"
+```
+
+> `401` → revisa el header `x-api-key` (no `Authorization`), sin saltos de línea. `403` → tu key no tiene el scope. `400` → el sobre no cumple el IES (compara contra `/catalog/event-standard`).
 
 ---
 
@@ -121,15 +252,41 @@ La plataforma es un **broker de eventos** con API HTTP y Postgres. Tu tool **sol
 
 > Si eres tool B y necesitas "lo último que publicó la tool A", no le preguntas a A: le pides a la plataforma **el último evento del tipo que A produce** (sección 5.1).
 
+### Referencia rápida: endpoints
+
+| Método | Ruta (bajo la URL base) | Scope | Qué hace |
+|--------|-------------------------|-------|----------|
+| `POST` | `/events` | `events:write` | Publica (idempotente por `event_id`). |
+| `GET`  | `/events?since_seq=N` | `events:read` | Consumo incremental por cursor (**recomendado**). |
+| `GET`  | `/events?start=&end=` | `events:read` | Rango por fecha (ISO), modo compat. |
+| `GET`  | `/events/latest?type=` | `events:read` | Última data por tipo (cache + ETag/304). |
+| `GET`  | `/events/subscriptions/:toolId` | `events:read` | Solo los tipos que esa tool consume. |
+| `GET`  | `/events/chain/:correlationId` | `events:read` | Cadena causal de un `correlation_id`. |
+| `GET`  | `/catalog/*` | — (abierto) | Contrato público: standard, eventos, tools. |
+| `GET`  | `/health` · `/ready` | — (abierto) | Liveness · readiness. |
+
+### Referencia rápida: errores comunes
+
+| Código | Significa | Qué haces |
+|--------|-----------|-----------|
+| `401` | Falta o está mal la API key | Revisa el header `x-api-key` (no `Authorization`), sin saltos de línea. |
+| `403` | Tu key no tiene el scope | Pide al admin registrar la key con `events:read` y/o `events:write`. |
+| `429` | Rate limit excedido (poll muy agresivo) | Respeta el header `Retry-After`; baja la frecuencia y apóyate en el `ETag` de `/latest`. |
+| `400` | Payload no cumple el IES | Compara contra `/catalog/event-standard` y el [§ 3](#3-el-payload-de-entrada-el-sobre-ies). |
+
 ---
 
 ## 2. Conectarte: URL, API key y scopes
 
 Toda ruta bajo `/api/v1/events` exige el header **`x-api-key`**. El catálogo y health son abiertos.
 
+**Cómo consigues tu key (esto es lo PRIMERO que haces):** tú generas un secreto aleatorio y el admin lo registra en la plataforma. Paso a paso en la [Vía rápida § Paso 0](#paso-0--consigue-tu-api-key-esto-es-lo-primero), más arriba, y en [`pasos/02-api-central.md` § 2.0](./pasos/02-api-central.md).
+
 ```bash
-# La plataforma te da una key (se imprime UNA sola vez, guárdala como secreto):
-npm run apikey:create mi_tool -- --scopes=events:read,events:write
+# 1. Genera TU secreto (guárdalo, no se vuelve a mostrar):
+openssl rand -hex 24
+# 2. Pásaselo al admin con el nombre de tu tool; él lo registra en Railway
+#    (BOOTSTRAP_API_KEY / BOOTSTRAP_API_KEY_LABEL) y redespliega.
 ```
 
 | Scope | Para qué |
@@ -145,7 +302,7 @@ npm run apikey:create mi_tool -- --scopes=events:read,events:write
 Variables que conviene tener en tu tool:
 
 ```bash
-CORE_BASE_URL=https://<tu-core>.up.railway.app   # o http://localhost:3000 en local
+CORE_BASE_URL=https://isotools-production.up.railway.app
 API_KEY=<tu key>
 ```
 
@@ -577,7 +734,7 @@ npm run cerebro:generar   # idempotente: nunca pisa lo que ya escribiste
 
 ## 🌿 Estrategia de ramas: una por comunicación
 
-El trabajo entre dos tools que se comunican se hace en **su propia rama**, no en `main`. Convención:
+El trabajo entre dos tools que se comunican se hace en **su propia rama**, no en `feature/filter`. Convención:
 
 ```
 comm/<sourceToolId>__<targetToolId>      ej: comm/inspect_product_quality__manage_nonconformances
@@ -592,9 +749,9 @@ Flujo:
    ```
 2. **Trabaja el contrato** entre las dos tools en esa rama (código + payload).
 3. **Anota el cambio** en la bitácora de `cerebro/comunicaciones/<source>__<target>.md`.
-4. **PR de la rama → `main`** cuando el contrato quede estable.
+4. **PR de la rama → `feature/filter`** cuando el contrato quede estable.
 
-Así `main` siempre refleja contratos acordados, y cada negociación entre dos programadores vive aislada hasta que cierra.
+Así `feature/filter` siempre refleja contratos acordados, y cada negociación entre dos programadores vive aislada hasta que cierra.
 
 ---
 
@@ -609,6 +766,10 @@ Así `main` siempre refleja contratos acordados, y cada negociación entre dos p
 | `agents.json` | Los 13 agentes y qué tools agrupa cada uno. |
 
 Quién edita cada uno y cuándo: ver **[`pasos/03-archivos-json.md`](./pasos/03-archivos-json.md)**.
+
+> **Para una tool externa, `tools.json` es OPCIONAL.** La plataforma acepta y entrega eventos aunque tu tool no esté listada: publicas con `POST /events` (el validador solo revisa la forma del sobre IES, **no** que tu `module.id` exista en el catálogo) y consumes con `GET /events?type=…&since_seq=…`. Solo necesitas un renglón en `tools.json` si quieres aparecer en `/catalog` o usar `/events/subscriptions/:toolId` (el consumo "solo lo mío"): eso es un PR de **datos**, no de código, y hoy requiere un redeploy para que el catálogo lo recargue.
+>
+> **Sin `tools.json`, la coordinación de nombres corre por tu cuenta:** los `event.type` **no se validan**, así que si un productor publica `EVENT_X` y un consumidor escucha `EVENT_x`, nunca hacen match y no hay error. Acuerden los nombres exactos por convención (en el [cerebro Obsidian](./cerebro/) o donde prefieran) — eso es lo que el catálogo hacía por ustedes.
 
 ---
 

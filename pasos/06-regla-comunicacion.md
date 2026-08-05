@@ -2,6 +2,8 @@
 
 > [⬅ Volver al roadmap](../README.md)
 
+> **⚠️ Solo para tools NATIVAS (admin/core).** `communication-rules.json` solo lo usa el bus para auto-disparar handlers **dentro del repo**. Una tool **externa** no crea reglas: reacciona por su cuenta consumiendo el tipo de evento por la API. Ver el banner del [Paso 1](./01-vision-general.md).
+
 ## Qué vas a lograr en este paso
 
 Aprender a **declarar quién dispara a quién** en `communication-rules.json`. Esto es lo que conecta tu tool con el resto del sistema. Sin una regla aquí, tu tool nunca se va a ejecutar — aunque esté perfectamente escrita.
@@ -32,7 +34,7 @@ Hay tres formas teóricas de que tu tool reciba eventos. En este proyecto **solo
 
 | Modo | Cómo funciona | ¿Lo usamos? |
 |---|---|---|
-| Pull | La tool pregunta cada N segundos `GET /api/v1/events?since_id=X` | ❌ No |
+| Pull | La tool pregunta cada N segundos `GET /api/v1/events?since_seq=N` (cursor keyset) | ❌ No |
 | Push externo (webhook HTTP) | La API hace `POST https://<tool>/run` cuando llega un evento | ❌ No |
 | **Push in-process** | La tool es una función Node y el bus la importa y llama directamente | ✅ Sí |
 

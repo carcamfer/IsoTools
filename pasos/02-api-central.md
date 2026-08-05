@@ -4,110 +4,82 @@
 
 ## Qué vas a lograr en este paso
 
-Tener claras las **dos formas** en que vas a usar la API mientras desarrollas tu tool, y cómo conectarte a la API compartida del equipo:
+Conseguir tu **API key** y **conectarte a la plataforma central**. **Todos se conectan a la misma plataforma desplegada** en Railway: no se corre nada en local. Apuntas tu tool a la URL con tu key y listo.
 
-1. **Local con Docker** — para iterar rápido en tu handler sin internet ni latencia.
-2. **API central en Railway** — para probar integración con tools de otros programadores.
+Orden correcto:
 
-Al final del paso vas a tener corriendo la API en local, una API key personal, y la URL de la central para integración.
+1. **Paso 0 — API key** (lo primero de todo, § 2.0).
+2. **Conectarte a la plataforma central** (§ 2.3) y probar publicar/consumir.
 
-> 📥 **Plantillas descargables**:
-> - [`env-local.example`](../plantillas/env-local.example) — variables de entorno para desarrollo local
-> - [`env-central.example`](../plantillas/env-central.example) — variables para conectarte a la API compartida
+> **URL base de la plataforma:**
+> ```
+> https://isotools-production.up.railway.app/api/v1
+> ```
+
+> 📥 **Plantilla descargable**:
+> - [`env-central.example`](../plantillas/env-central.example) — variables para conectarte a la plataforma
 
 ---
 
-## 2.1 Topología híbrida — qué corre dónde
+## 2.0 — Consigue tu API key (LO PRIMERO)
+
+Sin API key, todo `POST`/`GET` de eventos responde `401`. Consíguela **antes de escribir código**.
+
+**El programador genera su propia key; el admin la registra.** Pasos:
+
+1. **Genera tú un secreto aleatorio** (es TU key, guárdala como secreto):
+   ```bash
+   openssl rand -hex 24     # recomendado
+   # o: uuidgen
+   ```
+
+2. **Pásale al admin (Carlos):** el **valor** de la key + el **nombre de tu tool** (el *label*, ej. `tool-vision`).
+
+3. **El admin la registra** en Railway → servicio **IsoTools** → **Variables**:
+   ```
+   BOOTSTRAP_API_KEY        = <la key que generaste>
+   BOOTSTRAP_API_KEY_LABEL  = <nombre de tu tool, ej. tool-vision>
+   BOOTSTRAP_API_KEY_SCOPES = events:read,events:write   # opcional (default: read,write)
+   ```
+   Al redesplegar, la plataforma inserta la key (hasheada, nunca se imprime). Es idempotente. Luego el admin **quita** `BOOTSTRAP_API_KEY` por seguridad.
+
+4. Ya puedes usarla en el header **`x-api-key`**. Guárdala en tu `.env` (nunca la commitees):
+   ```bash
+   CORE_BASE_URL=https://isotools-production.up.railway.app
+   API_KEY=<tu-key>
+   ```
+
+**Scopes:** `events:write` para publicar, `events:read` para consumir. Lo normal es pedir `events:read,events:write`.
+
+---
+
+## 2.1 Topología — una sola plataforma para todos
 
 ```
 ┌───────────────────────────────────────────────────────────┐
-│  TU LAPTOP (cada programador)                              │
+│  PLATAFORMA CENTRAL — Railway (única, para todos)          │
+│  https://isotools-production.up.railway.app                │
 │                                                            │
-│  docker compose --profile api up -d                        │
-│       ┌──────────────────────────┐                         │
-│       │ IsoTools (Node) │ ◄── tu tool en          │
-│       │  puerto 3000             │     src/tools/...       │
-│       └────────────┬─────────────┘                         │
-│                    ▼                                       │
-│       ┌──────────────────────────┐                         │
-│       │ Postgres 16 (Docker)     │                         │
-│       └──────────────────────────┘                         │
-│                                                            │
-│  Usar para: iterar el handler, smoke tests, debugging      │
-└───────────────────────────────────────────────────────────┘
-                            │
-                            │ git push
-                            ▼
-┌───────────────────────────────────────────────────────────┐
-│  API CENTRAL — Railway                                     │
-│  https://www.expo-programador.com                          │
-│                                                            │
-│  Proyecto: zealous-perception                              │
 │  Auto-deploy en cada push a main                           │
-│  Postgres 18 administrado (plugin de Railway)              │
+│  Postgres administrado (plugin de Railway)                 │
 │  Health: /api/v1/health                                    │
 │                                                            │
-│  Usar para: integración real entre tools, demos, reporte   │
-│  ISO con datos compartidos, dashboard del equipo           │
+│  Aquí ocurre TODO: publicar, consumir, integrar tools      │
 └───────────────────────────────────────────────────────────┘
+        ▲                    ▲                    ▲
+        │ HTTP + x-api-key   │                    │
+   ┌─────────┐          ┌─────────┐          ┌─────────┐
+   │ tool A  │          │ tool B  │          │ tool C  │
+   └─────────┘          └─────────┘          └─────────┘
 ```
 
-**Regla simple**: desarrollas en local, integras en central.
+**Regla simple**: no corres nada en local. Todas las tools apuntan a la misma URL central con su propia API key. El dashboard, las vistas y el reporte ISO **no viven en este repo** (es solo-tools): corren en el repo de la plataforma.
 
 ---
 
-## 2.2 Parte A — Correr la API en local (cada programador)
+## 2.2 Deploy de la plataforma en Railway
 
-### Pre-requisitos
-
-- Docker Desktop (Mac/Win) o Docker Engine + Compose (Linux)
-- Git
-- Node 18+ (opcional, solo si quieres correr scripts fuera de Docker)
-
-### Paso a paso
-
-```bash
-# 1. Clonar el repo
-git clone <url-del-repo-IsoTools>
-cd IsoTools
-
-# 2. Copiar el .env de ejemplo
-cp .env.example .env
-
-# 3. Levantar API + Postgres
-docker compose --profile api up -d
-
-# 4. Verificar que vive
-curl http://localhost:3000/api/v1/health
-# Esperado: {"status":"ok"}
-
-# 5. Crear tu API key personal (queda guardada en la DB local)
-docker compose exec api npm run apikey:create -- mi-nombre --scopes=events:read,events:write
-# Copia la key que aparece. NO se vuelve a mostrar.
-
-# 6. Mandar un evento de prueba
-curl -X POST http://localhost:3000/api/v1/events \
-  -H "Content-Type: application/json" \
-  -H "x-api-key: <tu-key-local>" \
-  -d @sample-event.json
-```
-
-> Si necesitas también el dashboard: `docker compose --profile dashboard up -d` y abre `http://localhost:3000/dashboard`.
-
-### Cuándo usas la API local
-
-| Caso | Usa local |
-|---|---|
-| Estás iterando en el código de tu handler | ✅ |
-| Quieres correr smoke tests rápido (sin red) | ✅ |
-| Debuggeas un evento que se rompe en ingest | ✅ |
-| Sembrar 200 eventos para llenar el dashboard | ✅ (`docker compose --profile seed up`) |
-
----
-
-## 2.3 Parte B — Deploy de la API central en Railway
-
-> Esta parte la hace **una vez** el admin del proyecto (Carlos). Si tú eres un programador externo, salta a [2.4](#24-parte-c--conectarte-a-la-api-central).
+> Esta parte la hace **una vez** el admin del proyecto (Carlos). Si tú eres un programador, salta a [§ 2.3](#23-conectarte-a-la-plataforma-el-flujo-normal).
 
 ### Por qué Railway
 
@@ -132,12 +104,12 @@ curl -X POST http://localhost:3000/api/v1/events \
    psql $DATABASE_URL -f db/init.sql
    ```
 7. **Genera el dominio público**: Settings → Networking → `Generate Domain`. Obtienes algo como `IsoTools-production.up.railway.app`, o conectas un dominio propio (en este proyecto: `www.expo-programador.com`).
-8. **Crea API keys para los programadores** (ver § 2.5).
+8. **Registra las API keys de los programadores** (ver § 2.4).
 
 ### Verificar el deploy
 
 ```bash
-curl https://www.expo-programador.com/api/v1/health
+curl https://isotools-production.up.railway.app/api/v1/health
 # Esperado: {"status":"ok"}
 ```
 
@@ -172,27 +144,30 @@ Lecciones aprendidas al hacer el deploy inicial. Si vas a tocar Railway, léelo:
 
 ---
 
-## 2.4 Parte C — Conectarte a la API central
-
-Si eres un programador externo y vas a integrar con la API ya desplegada:
+## 2.3 Conectarte a la plataforma (el flujo normal)
 
 ### Pre-requisitos
 
-- La **URL pública** de la API (te la da el admin, ej. `https://www.expo-programador.com`).
-- Tu **API key personal** (te la da el admin, generada con `apikey:create`).
+- La **URL base**: `https://isotools-production.up.railway.app`.
+- Tu **API key** (la del § 2.0, que generaste tú y el admin registró).
 
-### Configura tu `.env` para apuntar a la central
-
-Crea `.env.central` en la raíz de tu repo local:
+### Configura tu `.env`
 
 ```bash
-API_BASE_URL=https://www.expo-programador.com
-API_KEY=<tu-key-de-railway>
+API_BASE_URL=https://isotools-production.up.railway.app
+API_KEY=<tu-key>
 ```
 
-> No commitees `.env.central`. Añádelo al `.gitignore`.
+> No commitees el `.env`. Añádelo al `.gitignore`.
 
-### Mandar un evento a la central
+### Verifica la conexión
+
+```bash
+curl "$API_BASE_URL/api/v1/health"   # -> {"status":"ok"}
+curl "$API_BASE_URL/api/v1/ready"    # -> {"status":"ready"}  (además hay DB)
+```
+
+### Publicar un evento
 
 ```bash
 curl -X POST $API_BASE_URL/api/v1/events \
@@ -201,11 +176,17 @@ curl -X POST $API_BASE_URL/api/v1/events \
   -d @sample-event.json
 ```
 
-### Consultar eventos en la central
+Es **idempotente**: reintentar el mismo `event_id` no duplica (responde `200 duplicate`).
+
+### Consumir eventos (cursor keyset — el patrón por defecto)
 
 ```bash
-curl "$API_BASE_URL/api/v1/events?since_id=0" -H "x-api-key: $API_KEY"
+# Arranca en 0; usa el next_seq de la respuesta en el siguiente tick:
+curl "$API_BASE_URL/api/v1/events?since_seq=0&type=CALIBRATION_FAILED" \
+  -H "x-api-key: $API_KEY"
 ```
+
+Otras formas de consumir: `GET /events/latest?type=…` (última data por tipo, con ETag/304) y `GET /events/subscriptions/<tu_tool_id>?since_seq=0` (solo lo que tu tool declara consumir). Detalle completo: la [Vía rápida](../README.md#vía-rápida--tu-primer-día-todos-usan-la-plataforma-central) y el Manual del `README.md`.
 
 ### Ver la cadena causal de un evento
 
@@ -215,7 +196,7 @@ curl "$API_BASE_URL/api/v1/events/chain/<correlation-id>" -H "x-api-key: $API_KE
 
 ---
 
-## 2.5 Parte D — Gestión de API keys (una por programador)
+## 2.4 Gestión de API keys (una por tool)
 
 **Decisión del proyecto**: cada programador tiene su propia API key. Esto te da:
 
@@ -223,38 +204,38 @@ curl "$API_BASE_URL/api/v1/events/chain/<correlation-id>" -H "x-api-key: $API_KE
 - Posibilidad de revocar a un programador sin afectar a los demás.
 - Scopes diferenciados (ej. junior solo `events:read`).
 
-### Crear una key (lo hace el admin)
+### Registrar una key en la plataforma (flujo normal)
 
-En la API **local**:
+Como se explicó en § 2.0: **el programador genera su propio secreto y el admin lo registra** por variable de entorno en Railway. El admin va a Railway → servicio **IsoTools** → **Variables**:
+
+```
+BOOTSTRAP_API_KEY        = <la key que generó el programador>
+BOOTSTRAP_API_KEY_LABEL  = <nombre de la tool, ej. tool-vision>
+BOOTSTRAP_API_KEY_SCOPES = events:read,events:write   # opcional
+```
+
+Redeploy → la key queda insertada (hasheada, no se imprime; idempotente). El admin **quita** `BOOTSTRAP_API_KEY` después. Como es una sola variable, se registra **una key a la vez**: repite el ciclo por cada tool.
+
+### Alternativa (admin, con acceso a la DB): `apikey:create`
+
+Si el admin prefiere generar la key él mismo en vez de recibirla, desde la shell del servicio en Railway:
 ```bash
-docker compose exec api npm run apikey:create -- carlos --scopes=events:read,events:write
+node scripts/createApiKey.js tool-vision --scopes=events:read,events:write
 ```
-
-En la API **central de Railway** (vía consola web de Railway, en la pestaña "Shell" del servicio API):
-```bash
-node scripts/createApiKey.js juanperez --scopes=events:read,events:write
-```
-
-La salida contiene la key en texto plano **una sola vez**:
-```
-API key created for label: juanperez
-Scopes: events:read, events:write
-Save this key securely, it will not be shown again:
-abc123xyz...
-```
+Imprime la key en texto plano **una sola vez** — cópiala y entrégasela al programador.
 
 ### Scopes disponibles
 
 | Scope | Permite |
 |---|---|
-| `events:read` | `GET /api/v1/events`, `/chain/:id`, dashboard |
-| `events:write` | `POST /api/v1/events` (ingesta) |
+| `events:read` | Consumir: `GET /api/v1/events`, `/latest`, `/subscriptions/:id`, `/chain/:id` |
+| `events:write` | Publicar: `POST /api/v1/events` |
 
 Combinaciones típicas:
 
-- **Programador**: `events:read,events:write` (default)
-- **Tool/cliente solo-ingest**: `events:write`
-- **Dashboard externo / consultor**: `events:read`
+- **Tool que publica y consume**: `events:read,events:write` (lo normal)
+- **Tool solo-ingest**: `events:write`
+- **Consumidor / consultor**: `events:read`
 
 ### Revocar una key
 
@@ -274,36 +255,21 @@ DELETE FROM api_keys WHERE label = 'nombre-del-programador';
 
 ---
 
-## 2.6 Cuándo usar local vs central — tabla decisiva
-
-| Lo que vas a hacer | Local | Central |
-|---|---|---|
-| Escribir y probar tu handler | ✅ | ❌ |
-| Smoke test del handler aislado | ✅ | ❌ |
-| Probar que tu tool se dispare con el bus | ✅ (más rápido) | ✅ |
-| Integrar con tool de otro programador | ❌ | ✅ |
-| Validar que el reporte ISO incluye tu agente | ❌ | ✅ |
-| Demo a stakeholders | ❌ | ✅ |
-| Seed de 200 eventos para llenar el dashboard | ✅ | Solo si el admin lo aprueba |
-
----
-
-## 2.7 Solución de problemas comunes
+## 2.5 Solución de problemas comunes
 
 | Síntoma | Causa | Cómo resolver |
 |---|---|---|
-| `connection refused` al hacer curl local | Docker compose no levantó | `docker compose --profile api up -d` y revisa `docker compose logs api` |
 | `401 Unauthorized` | API key faltante o mal escrita | Verifica header `x-api-key` (no `Authorization`), key sin saltos de línea |
-| `403 forbidden — missing scope` | Tu key no tiene `events:write` | Regenera con el scope correcto |
-| Evento aceptado pero no aparece en `/events` | Falló validación silenciosa o se cayó el worker del bus | `docker compose logs api` o en Railway: pestaña "Deployments" → "View Logs" |
+| `403 forbidden — missing scope` | Tu key no tiene el scope | Pide al admin registrar la key con `events:read` y/o `events:write` |
+| Evento aceptado (201) pero no aparece al consumir | Falló validación silenciosa o el filtro no coincide | Revisa el `type`/filtros de tu `GET`; en Railway: pestaña "Deployments" → "View Logs" |
+| `429 Too Many Requests` | Poll demasiado agresivo | Respeta el header `Retry-After`; baja la frecuencia y usa el `ETag` de `/latest` |
 | Railway tarda en redesployar | Build de Docker lento | Normal en el primer deploy. Subsecuentes usan cache y bajan a ~1 min |
 
 ---
 
 ## Archivos descargables
 
-- 📥 [`env-local.example`](../plantillas/env-local.example) — `.env` para desarrollo local con Docker Compose.
-- 📥 [`env-central.example`](../plantillas/env-central.example) — `.env.central` para conectarte a Railway.
+- 📥 [`env-central.example`](../plantillas/env-central.example) — `.env` para conectarte a la plataforma en Railway.
 
 ---
 
@@ -311,4 +277,4 @@ DELETE FROM api_keys WHERE label = 'nombre-del-programador';
 
 → [Paso 3: Cargar los archivos JSON del estándar](./03-archivos-json.md) _(en preparación)_
 
-Si ya tienes la API corriendo y quieres saltar al código: → [Paso 4: Nombrado IES](./04-nombrado-ies.md)
+Si ya tienes tu API key y la URL, y quieres saltar al código: → [Paso 4: Nombrado IES](./04-nombrado-ies.md)

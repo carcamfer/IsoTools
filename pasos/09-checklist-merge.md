@@ -2,6 +2,8 @@
 
 > [⬅ Volver al roadmap](../README.md)
 
+> **⚠️ Solo para tools NATIVAS (admin/core).** Este checklist es para el PR que mergea un handler dentro de este repo. Una tool **externa** no mergea nada aquí: su código vive en su propio repo. Ver el banner del [Paso 1](./01-vision-general.md).
+
 ## Qué vas a lograr en este paso
 
 Tener una lista **única y exhaustiva** que recorres antes de abrir el PR. Si algo está en rojo, **no se mergea**. Incluye también la tabla de errores comunes y el apéndice de campos para que tengas todo a la mano sin abrir otros pasos.
@@ -43,10 +45,8 @@ CI hoy (`/.github/workflows/ci.yml`) corre: `npm install`, `npm run lint`, build
 ### Pruebas
 
 - [ ] 🟢 `scripts/test_<tool_id>.js` corre y produce salida válida _(smoke aislado del handler — paso 8 § 8.2)._
-- [ ] 🟢 POST a `/api/v1/events` con tu evento prueba devuelve 201. GET con `start`/`end` lo encuentra.
+- [ ] 🟢 POST a `/api/v1/events` (plataforma central) con tu evento prueba devuelve 201. GET con `?since_seq=0&type=<tu_tipo>` lo encuentra (y avanza el `next_seq`).
 - [ ] 🔵 Smoke test end-to-end vía `curl` muestra el evento de respuesta con `correlation_id` correcto. _(Sin bus + sin columna correlation_id, no aplica hoy.)_
-- [ ] 🟢 Dashboard `/dashboard` carga sin error y tu tool aparece en `/agentes/tools/<id>`. _(Lo que renderiza viene del catálogo `tools.json`, no de eventos.)_
-- [ ] 🟡 Reporte `/audit-report` lo agrega a la norma correspondiente (si aplica).
 
 ### Documentación
 

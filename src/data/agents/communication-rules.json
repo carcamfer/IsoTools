@@ -596,16 +596,6 @@
       "description": "Mediciones de calidad capturadas actualizan cartas de control SPC en tiempo real"
     },
     {
-      "id": "rule-qual-002",
-      "sourceToolId": "calculate_control_charts",
-      "targetToolId": "detect_out_of_control_signals",
-      "event": "CHART_POINTS_UPDATED",
-      "protocol": "REST",
-      "topic": "POST /api/quality/spc/detect",
-      "triggerCondition": "always",
-      "description": "Cartas de control actualizadas ejecutan detección de señales fuera de control"
-    },
-    {
       "id": "rule-qual-003",
       "sourceToolId": "detect_out_of_control_signals",
       "targetToolId": "manage_nonconformances",

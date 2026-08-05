@@ -2,6 +2,16 @@
 
 > [⬅ Volver al roadmap](../README.md)
 
+> ## ⚠️ Antes de empezar: ¿tu tool es externa o nativa?
+>
+> **Este roadmap describe la tool NATIVA** — un handler que vive **dentro de este repo** (`src/tools/`) y que la plataforma corre en su propio proceso. Es cómo se construyó el paquete de referencia ISO 9001 (16 tools) y es **tarea del admin/core**.
+>
+> **Si construyes una tool externa (lo normal):** vive en **tu propio repo**, en cualquier lenguaje, y solo habla con la plataforma por HTTP. **No necesitas `src/tools/`, ni `communication-rules.json`, ni PRs de código.** Tu guía es el **[Manual de integración del README](../README.md#manual-de-integración-publicar-y-consumir-eventos)**.
+>
+> **Qué pasos de este roadmap te sirven aunque seas externo:** el **2** (conseguir tu API key), el **4** (nombrado de eventos IES) y el **8** (pruebas). Los pasos **5, 6, 7 y 9** (handler, regla de comunicación, placeholder, checklist de merge) son exclusivos del camino nativo.
+>
+> **Una diferencia clave:** el **auto-disparo** (que otra tool reaccione *sola* cuando publicas) solo ocurre entre tools **nativas**, vía el bus. Entre tools externas no hay orquestador: cada una corre su propio *poll* y trae su reacción codificada.
+
 ## Qué vas a lograr en este paso
 
 Entender en 5 minutos cómo encaja tu tool en la plataforma industrial, y por qué las tools **nunca se llaman entre sí**. Esta regla mental es la más importante de todo el roadmap. Si la rompes en tu código, rompes el sistema sin darte cuenta.
@@ -31,7 +41,7 @@ El sistema tiene tres capas. **Tu tool vive en la capa de en medio.**
                              ▼
 ┌──────────────────────────────────────────────────────────────────────┐
 │  CAPA 3 — CONSUMIDORES                                                │
-│  Dashboard (/dashboard) · Reporte ISO (/audit-report) · otras tools   │
+│  Otras tools (polling GET /events) · consumidores externos            │
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -65,15 +75,23 @@ const result = await runB(evento);
 
 ---
 
-## 1.3 Qué te toca como programador externo
+## 1.3 Qué te toca — según el tipo de tool
 
-Cuando construyes una tool, tu único trabajo es:
+**Si tu tool es EXTERNA (lo normal):** tu único trabajo es, desde tu propio repo:
+
+1. **Publicar** tus eventos con `POST /events`.
+2. **Consumir** los tipos que te interesan con `GET /events?type=…&since_seq=…` (o `/events/subscriptions/:toolId` si te registraste en el catálogo).
+3. **Reaccionar** en tu código y, si emites algo, propagar `correlation_id`/`causation_id`.
+
+No escribes en `src/tools/`, no tocas `communication-rules.json`, no haces PR de código. Detalle completo en el [Manual de integración del README](../README.md#manual-de-integración-publicar-y-consumir-eventos).
+
+**Si tu tool es NATIVA (admin/core):** tu trabajo es:
 
 1. **Escribir un archivo** `src/tools/<tu_tool_id>.js` que exporte `meta` y `handler`.
 2. **Declarar a qué eventos reacciona** (en `meta.consumes`) y **qué eventos emite** (en `meta.produces`).
 3. **Registrar la regla** en `communication-rules.json` que conecta los eventos de otras tools con la tuya.
 
-Eso es todo. No abres puertos, no haces deploys separados, no configuras redes.
+En ambos casos: no abres puertos hacia otras tools, no las llamas directo. El resto de este roadmap (pasos 5–9) desarrolla el camino **nativo**.
 
 ---
 
@@ -116,7 +134,7 @@ IsoTools/
 │   ├── generar-cerebro.js          regenera las notas del cerebro
 │   └── crear-rama-comunicacion.js  crea la rama de tu comunicación
 │
-├── docker-compose.yml          ◄── ⚪ NO LO TOCAS (Paso 2 explica cómo levantarlo)
+├── docker-compose.yml          ◄── ⚪ NO LO TOCAS (deploy del admin, Paso 2)
 ├── Dockerfile                  ◄── ⚪ NO LO TOCAS
 ├── railway.toml                ◄── ⚪ NO LO TOCAS (es deploy del admin)
 ├── db/init.sql                 ◄── ⚪ NO LO TOCAS

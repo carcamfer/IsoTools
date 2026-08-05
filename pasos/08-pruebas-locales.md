@@ -1,4 +1,4 @@
-# Paso 8 — Probar localmente tu tool
+# Paso 8 — Probar tu tool
 
 > [⬅ Volver al roadmap](../README.md)
 
@@ -19,22 +19,25 @@ Verificar tu tool en tres niveles: (1) que el handler funciona aislado, (2) que 
 | `GET /api/v1/events/chain/:correlationId` | ✅ Existe y devuelve la cadena causal en orden. |
 | Columnas `correlation_id` / `causation_id` | ✅ Existen en `industrial_events`. |
 | Simulación de un clic | ✅ `npm run sim:iso` (o `node scripts/test_package_iso.js <escenario>`). |
-| `GET /api/v1/events?since_id=0` | ❌ No existe `since_id`. El listado por fecha usa `start`/`end` ISO. La forma fácil de ver una cadena es `/chain/:correlationId`. |
+| `GET /api/v1/events?since_seq=0` | ✅ Consumo incremental por **cursor keyset**: devuelve `seq > since_seq` y un `next_seq` para el siguiente tick. (También existe `start`/`end` ISO para rango por fecha.) |
+| `GET /api/v1/events/latest?type=…` | ✅ La última data por tipo (cache + ETag/304). |
+| `GET /api/v1/events/subscriptions/:toolId` | ✅ Solo los tipos que tu tool declara consumir en `tools.json`. |
 | Worker asíncrono / `events_dlq` | 🚧 El bus corre **síncrono** dentro del POST; errores van en la respuesta y al log, no a una DLQ. |
 
 > Guía completa con Postman: `docs/SIMULACION_PASO_A_PASO.md`.
 
 ---
 
-## 8.1 Levantar el ambiente local
+## 8.1 Contra qué API pruebas
+
+Siempre pruebas **contra la plataforma central** desplegada en Railway (es la única; nadie corre la plataforma en local). Necesitas tu API key (§ 2.0 del [Paso 2](./02-api-central.md)) y la URL base:
 
 ```bash
-docker compose --profile api up -d        # Levanta API + Postgres
-docker compose exec api npm run apikey:create -- my-tool --scopes=events:read,events:write
-# Guarda la API key que aparece en consola (solo se muestra una vez)
+export API_BASE_URL="https://isotools-production.up.railway.app"
+export API_KEY="<tu-key>"
 ```
 
-> ⚠️ El proceso exacto depende de cómo tengan deployada la API central. Ver [Paso 2: Crear la API central](./02-api-central.md) para opciones de deploy.
+> El **smoke test aislado** de § 8.2 sí corre en tu máquina, pero no toca la plataforma: solo importa tu handler como módulo y le pasa un evento de prueba (es un test unitario, no una conexión al servidor).
 
 ---
 
@@ -80,9 +83,9 @@ Verifica que el output:
 Manda un evento y **la respuesta misma trae la cadena** que disparó:
 
 ```bash
-curl -X POST http://localhost:3000/api/v1/events \
+curl -X POST "$API_BASE_URL/api/v1/events" \
   -H "Content-Type: application/json" \
-  -H "x-api-key: <tu-key>" \
+  -H "x-api-key: $API_KEY" \
   -d @sample-event.json
 ```
 
@@ -107,8 +110,7 @@ Respuesta (201) — fíjate en `triggered` y `chain`:
 La forma más rápida de provocar una cadena de ejemplo:
 
 ```bash
-export API_BASE_URL=http://localhost:3000
-export API_KEY=<tu-key>
+# API_BASE_URL y API_KEY ya exportadas en 8.1
 npm run sim:iso                              # cadena larga SPC
 node scripts/test_package_iso.js defect      # cadena de defecto
 node scripts/test_package_iso.js variance    # cadena de dirección/KPIs
@@ -121,12 +123,30 @@ node scripts/test_package_iso.js variance    # cadena de dirección/KPIs
 ✅ **Ya implementado.** Con el `correlation_id` que te devolvió el POST:
 
 ```bash
-curl "http://localhost:3000/api/v1/events/chain/<correlation_id>" \
-  -H "x-api-key: <tu-key>"
+curl "$API_BASE_URL/api/v1/events/chain/<correlation_id>" \
+  -H "x-api-key: $API_KEY"
 ```
 
 Devuelve **todos** los eventos de la cadena en orden, cada uno con su `causation_id`
 (qué evento lo disparó). Útil para verificar fan-out, fan-in y cadenas largas.
+
+---
+
+## 8.4.1 Verificar que TU tool puede consumir
+
+Si tu tool consume eventos, confirma que la plataforma se los entrega. Dos formas:
+
+```bash
+# a) Por cursor keyset (lo que usarás en producción):
+curl "$API_BASE_URL/api/v1/events?since_seq=0&type=<TIPO_QUE_CONSUMES>" \
+  -H "x-api-key: $API_KEY"
+
+# b) Por suscripción (solo lo que tu tool declara consumir en tools.json):
+curl "$API_BASE_URL/api/v1/events/subscriptions/<tu_tool_id>?since_seq=0" \
+  -H "x-api-key: $API_KEY"
+```
+
+Guarda el `next_seq` de la respuesta: es el cursor que mandas en el siguiente tick.
 
 ---
 

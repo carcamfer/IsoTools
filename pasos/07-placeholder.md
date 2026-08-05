@@ -2,9 +2,11 @@
 
 > [⬅ Volver al roadmap](../README.md)
 
+> **⚠️ Solo para tools NATIVAS (admin/core).** El placeholder es un handler mínimo en `src/tools/`. Una tool **externa** no lo necesita: arranca publicando/consumiendo por la API. Ver el banner del [Paso 1](./01-vision-general.md).
+
 ## Qué vas a lograr en este paso
 
-Subir tu tool a `main` **antes de tenerla terminada**. Aprenderás cómo escribir un *placeholder funcional* — un esqueleto que responde con datos plausibles para no romper el flujo del sistema mientras desarrollas la lógica real.
+Subir tu tool a `feature/filter` **antes de tenerla terminada**. Aprenderás cómo escribir un *placeholder funcional* — un esqueleto que responde con datos plausibles para no romper el flujo del sistema mientras desarrollas la lógica real.
 
 > 📥 **Plantilla descargable**: [`placeholder-tool.js`](../plantillas/placeholder-tool.js) — Placeholder completo listo para clonar.
 

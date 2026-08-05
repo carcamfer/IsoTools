@@ -2,6 +2,8 @@
 
 > [⬅ Volver al roadmap](../README.md)
 
+> **⚠️ Para una tool EXTERNA, estos JSON son opcionales / de solo lectura.** No los editas para publicar ni consumir: el validador no comprueba tu `module.id` contra `tools.json`. Solo agregas un renglón en `tools.json` (PR de **datos**) si quieres salir en `/catalog` o usar `/events/subscriptions/:toolId`; `communication-rules.json` es exclusivo del bus nativo. Útil leerlos como referencia del contrato. Ver el banner del [Paso 1](./01-vision-general.md).
+
 ## Qué vas a lograr en este paso
 
 Conocer **los 5 archivos JSON** que controlan el comportamiento del sistema, dónde viven, quién los edita, cuándo, y cuáles vas a tocar tú cuando agregues tu tool. Es la página de referencia que abres antes de modificar cualquier configuración.
@@ -255,19 +257,17 @@ Dos bloques que el doc no expandía y conviene tener en mente:
 
 **Automáticamente al arrancar la API.** No tienes que correr ningún script de carga. El loader central es **`src/services/agentDataService.js`** — importa los 5 JSONs y los expone a las rutas y a los servicios derivados.
 
-| Archivo | Quién lo lee (importante) |
-|---|---|
-| `event-standard.json` | `agentDataService.js`, `agentDemoService.js`, `routes/agentesRoutes.js` (no el validador — ver § 3.2) |
-| `tools.json` | `agentDataService.js`, `agentDemoService.js`, `controllers/agentesController.js` |
-| `communication-rules.json` | `agentDataService.js`, `routes/agentesRoutes.js` |
-| `agents.json` | `agentDataService.js`, `controllers/agentesController.js`, `isoMappingService.js` (para reporte ISO) |
-| `tools-dev-spec.json` | `agentDataService.js` |
+| Archivo                    | Quién lo lee (importante)                                                                             |
+| -------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `event-standard.json`      | `agentDataService.js`, `agentDemoService.js`, `routes/agentesRoutes.js` (no el validador — ver § 3.2) |
+| `tools.json`               | `agentDataService.js`, `agentDemoService.js`, `controllers/agentesController.js`                      |
+| `communication-rules.json` | `agentDataService.js`, `routes/agentesRoutes.js`                                                      |
+| `agents.json`              | `agentDataService.js`, `controllers/agentesController.js`, `isoMappingService.js` (para reporte ISO)  |
+| `tools-dev-spec.json`      | `agentDataService.js`                                                                                 |
 
-**Cuando editas un archivo, ¿hay que reiniciar?**
+**Cuando editas un archivo, ¿cuándo toma efecto?**
 
-- **Local con `docker compose --profile api up -d`**: sí, `docker compose restart api` para que cargue el nuevo JSON.
-- **En desarrollo con `npm run dev` (nodemon)**: se recarga solo al detectar cambios.
-- **En Railway**: el push a `main` redespliega automáticamente y arranca con la versión nueva.
+Tu cambio en los JSON entra en producción **cuando se mergea a `feature/filter`**: Railway redespliega automáticamente y arranca con la versión nueva. No hay nada que reiniciar a mano — no corres la plataforma en local (todo vive en la central, ver [Paso 2](./02-api-central.md)).
 
 ---
 
