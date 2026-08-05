@@ -139,7 +139,7 @@ export function Sidebar({ agents, session }: { agents: AgentGroup[]; session: Se
         </label>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-2 py-2">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 py-2">
         {groups.length === 0 ? (
           <p className="px-2 py-6 text-center text-2xs text-faint">Sin coincidencias</p>
         ) : (

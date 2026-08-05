@@ -52,9 +52,9 @@ export function App() {
   const { agents, session, platform, counts } = bootstrap.data;
 
   return (
-    <div className="flex h-full">
+    <div className="fixed inset-0 flex">
       <Sidebar agents={agents} session={session} />
-      <main className="min-w-0 flex-1 overflow-y-auto">
+      <main className="min-w-0 flex-1 overflow-y-auto overscroll-contain">
         <Routes>
           <Route path="/" element={<OverviewPage agents={agents} counts={counts} platform={platform} />} />
           <Route path="/herramientas" element={<ToolsPage />} />
