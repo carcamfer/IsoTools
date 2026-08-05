@@ -19,6 +19,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { insertEvent } from './eventsService.js';
 import { getTool } from '../tools/index.js';
+import { isHandledExternally } from './deploymentService.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const RULES_PATH = path.join(__dirname, '../data/agents/communication-rules.json');
@@ -146,6 +147,23 @@ export async function runChain (rootEvent, { correlationId }) {
         type: event.event?.type
       };
       if (!evalCondition(rule.triggerCondition, ctx)) continue;
+
+      // Una tool FEDERADA y ya desplegada la corre su propio servicio, con su
+      // propio equipo. El core puede conservar un handler nativo con ese nombre (un
+      // stub de la simulación), pero ejecutarlo sería procesar el mismo evento dos
+      // veces: un DEFECT_FOUND levantaría la no conformidad del stub Y la de la
+      // tool real. El dueño del comportamiento es el servicio real, que consume por
+      // poll desde /events/subscriptions/:toolId. Se anota en la cadena para que la
+      // traza siga mostrando la arista: el evento no se perdió, cambió de dueño.
+      if (isHandledExternally(rule.targetToolId)) {
+        firedEdges.add(edgeKey);
+        chain.push({
+          tool: rule.targetToolId,
+          delegated_to: 'servicio federado',
+          triggered_by: rule.id
+        });
+        continue;
+      }
 
       const tool = getTool(rule.targetToolId);
       if (!tool) continue; // la tool destino no tiene handler (aún) → el bus la ignora

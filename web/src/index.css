@@ -1,0 +1,67 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+@import 'tailwindcss';
+
+/* Tema "Control Room": industrial, plano, oscuro. Sin degradados.
+   Los tokens son LOS MISMOS que usan las tools de calidad (ai-iso), a proposito:
+   el operador pasa del dashboard a un subdominio de otro equipo y no debe notar
+   que cambio de aplicacion. Un solo producto, varios despliegues. */
+@theme {
+  --color-bg: #0e1216;
+  --color-surface: #161b21;
+  --color-surface2: #1e242b;
+  --color-border: #262d35;
+  --color-text: #e6e9ec;
+  --color-muted: #9aa4ae;
+  --color-faint: #6b7681;
+  --color-brass: #d6a23e;
+  --color-ok: #3fb36b;
+  --color-warn: #e0a93b;
+  --color-danger: #e5604d;
+  --color-info: #4c8fbf;
+
+  --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
+
+  --text-2xs: 0.6875rem;
+  --text-2xs--line-height: 1rem;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Barras de scroll acordes al tema: en un panel oscuro, la barra clara del
+   sistema es lo primero que delata que esto no es una aplicacion terminada. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-surface2) transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--color-surface2);
+  border-radius: 6px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

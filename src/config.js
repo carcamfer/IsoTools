@@ -62,6 +62,29 @@ export const config = {
 
   // Margen para el apagado ordenado (drenar requests en vuelo antes de salir).
   shutdownGraceMs: int("SHUTDOWN_GRACE_MS", 10000),
+
+  // Datos de la plataforma que el dashboard necesita para construir los enlaces a
+  // cada tool. `domain` es el dominio registrable comun: cada tool federada vive en
+  // `<subdominio>.<domain>`. Sin el, las tools federadas se muestran sin desplegar
+  // en vez de generar enlaces rotos.
+  platform: {
+    name: process.env.PLATFORM_NAME || "IsoTools",
+    domain: process.env.PLATFORM_DOMAIN?.trim() || null,
+    // Desarrollo local: resuelve cada tool a http://localhost:<localPort> del
+    // registro de despliegue, para levantar el conjunto sin DNS ni TLS.
+    localTools: bool("PLATFORM_LOCAL_TOOLS", false),
+  },
+
+  // Consola de operacion (el dashboard). Todo lo que sirve al navegador.
+  console: {
+    // Sonda de salud hacia las tools federadas. El timeout corto es deliberado: un
+    // mosaico en gris es mejor que un dashboard colgado esperando a una tool caida.
+    healthTimeoutMs: int("CONSOLE_HEALTH_TIMEOUT_MS", 2500),
+    healthTtlMs: int("CONSOLE_HEALTH_TTL_MS", 15000),
+    // Donde vive el SPA compilado. Sin esto el core sirve solo la API (util para
+    // desplegar el core sin dashboard).
+    webDistDir: process.env.WEB_DIST_DIR?.trim() || null,
+  },
 };
 
 export default config;

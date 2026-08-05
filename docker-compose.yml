@@ -13,10 +13,23 @@ services:
       - DB_PASSWORD=industrial
       - DB_NAME=industrial_events
       - DATABASE_URL=postgresql://industrial:industrial@db:5432/industrial_events
+      # Las tools federadas de calidad corren fuera de este compose (repo ai-iso).
+      # `host.docker.internal` las alcanza desde dentro del contenedor; en Linux
+      # requiere el `extra_hosts` de abajo.
+      - TOOL_URL_MANAGE_PRODUCT_SPECS=http://host.docker.internal:8101
+      - TOOL_URL_MANAGE_DEVICE_REGISTRY=http://host.docker.internal:8102
+      - TOOL_URL_MANAGE_NONCONFORMANCES=http://host.docker.internal:8103
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       db:
         condition: service_healthy
     volumes:
+      # OJO: este bind mount tapa `web/dist` de la imagen con el del host. En
+      # desarrollo eso es lo que se quiere (recarga en caliente del backend); el
+      # dashboard se sirve aparte con `npm run web:dev`, que hace proxy a este
+      # contenedor. Para ver el SPA servido por el core, corre antes
+      # `npm run web:build` o levanta la imagen sin el mount.
       - .:/app
     command: npm run dev
 

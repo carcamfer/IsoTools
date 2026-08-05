@@ -102,6 +102,12 @@ async function main () {
     const branch = last ? '  └─' : '  ├─';
     if (c.error) {
       console.log(`${branch} ✗ ${c.tool}  ERROR: ${c.error}`);
+    } else if (c.delegated_to) {
+      // La tool está desplegada como servicio propio: el core no la ejecuta, ella
+      // consume por poll desde /events/subscriptions/:toolId. La arista se muestra
+      // igual para que la traza no parezca rota; lo que produzca aparecerá después
+      // en la cadena, publicado por ella misma.
+      console.log(`${branch} ${c.tool}  →  (delegado a su servicio federado)  [regla ${c.triggered_by}]`);
     } else {
       console.log(`${branch} ${c.tool}  →  ${c.event}  (${c.severity || 'n/a'})  [regla ${c.triggered_by}]`);
     }

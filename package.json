@@ -1,13 +1,18 @@
 {
   "name": "isotools",
   "version": "1.0.0",
-  "description": "Tools de agentes industriales para procedimientos ISO: handlers, bus de eventos y API de ingesta. Sin código de sitio web.",
+  "description": "Plataforma ISO: core de eventos (src/) y dashboard orquestador (web/). Dos arboles, dos toolchains, un solo origen al desplegar.",
   "main": "src/server.js",
   "type": "module",
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
     "lint": "eslint .",
+    "web:install": "npm --prefix web ci",
+    "web:dev": "npm --prefix web run dev",
+    "web:build": "npm --prefix web run build",
+    "web:typecheck": "npm --prefix web run typecheck",
+    "build": "npm run web:build",
     "db:migrate": "psql $DATABASE_URL -f db/init.sql",
     "seed:events": "node scripts/seedEvents.js",
     "seed:stream": "node scripts/simulateStream.js",
@@ -24,6 +29,7 @@
     "express": "^5.2.1",
     "morgan": "^1.10.0",
     "node-fetch": "^3.3.2",
+    "openid-client": "^6.8.4",
     "pg": "^8.18.0",
     "uuid": "^9.0.1"
   },
