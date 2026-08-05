@@ -1,0 +1,173 @@
+# .github/workflows/deploy-railway.yml
+# =============================================================================
+# PLANTILLA — VARIAS tools en un mismo repo.
+#
+# Cada tool es un PROYECTO Railway distinto (regla de la plataforma: un proyecto
+# por tool, todos en el mismo workspace). Por lo tanto cada tool tiene:
+#   · su propio token de proyecto  -> su propio secreto de repositorio
+#   · su propio servicio            -> su propio `--service`
+#   · su propio Dockerfile          -> ver README, sección "monorepo"
+#
+# Solo se redespliega la tool cuyos archivos cambiaron. Con tres tools y un cambio
+# de una línea en una, redesplegar las tres cuesta tres builds y tres reinicios
+# para nada.
+#
+# QUÉ TIENES QUE HACER:
+#   1. Un secreto por tool en Settings -> Secrets and variables -> Actions.
+#      Nómbralos como quieras, pero pon el nombre exacto en `secret` abajo.
+#   2. Edita el bloque TOOLS. Es lo único que se toca.
+# =============================================================================
+name: Deploy a Railway
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      desplegar_todo:
+        description: "Desplegar TODAS las tools, ignorando qué cambió"
+        type: boolean
+        default: false
+
+concurrency:
+  group: deploy-railway-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  # ══ EDITA SOLO ESTE BLOQUE ═══════════════════════════════════════════════
+  # `paths` son prefijos de ruta: si CUALQUIER archivo cambiado empieza con
+  # alguno, esa tool se redespliega. Incluye lo compartido (el código común, los
+  # manifiestos, el lockfile): si cambia el núcleo compartido, todas se reconstruyen,
+  # y eso es lo correcto.
+  TOOLS: >-
+    [
+      {
+        "name":    "product-specs",
+        "service": "manage-product-specs",
+        "secret":  "RAILWAY_TOKEN_PRODUCT_SPECS",
+        "health":  "https://specs.<dominio>/health",
+        "paths":   ["src/", "ui/shared/", "ui/apps/product-specs/",
+                    "docker/manage_product_specs.Dockerfile",
+                    "package.json", "pnpm-lock.yaml"]
+      },
+      {
+        "name":    "device-registry",
+        "service": "manage-device-registry",
+        "secret":  "RAILWAY_TOKEN_DEVICE_REGISTRY",
+        "health":  "https://devices.<dominio>/health",
+        "paths":   ["src/", "ui/shared/", "ui/apps/device-registry/",
+                    "docker/manage_device_registry.Dockerfile",
+                    "package.json", "pnpm-lock.yaml"]
+      },
+      {
+        "name":    "nonconformances",
+        "service": "manage-nonconformances",
+        "secret":  "RAILWAY_TOKEN_NONCONFORMANCES",
+        "health":  "https://nc.<dominio>/health",
+        "paths":   ["src/", "ui/shared/", "ui/apps/nonconformances/",
+                    "docker/manage_nonconformances.Dockerfile",
+                    "package.json", "pnpm-lock.yaml"]
+      }
+    ]
+  # ═════════════════════════════════════════════════════════════════════════
+
+jobs:
+  # ── 1. Decidir qué se redespliega ──────────────────────────────────────────
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.pick.outputs.matrix }}
+      hay: ${{ steps.pick.outputs.hay }}
+    steps:
+      # `fetch-depth: 0` hace falta para poder comparar contra el commit anterior.
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - id: pick
+        env:
+          ANTES: ${{ github.event.before }}
+          TODO: ${{ inputs.desplegar_todo }}
+        run: |
+          set -euo pipefail
+
+          # En el primer push a una rama, `before` son puros ceros y no hay contra
+          # qué comparar. Ante la duda se despliega todo: dejar una tool sin
+          # actualizar en silencio es peor que un build de más.
+          if [ "$TODO" = "true" ] || [ -z "$ANTES" ] || [ "$ANTES" = "0000000000000000000000000000000000000000" ] || ! git cat-file -e "$ANTES^{commit}" 2>/dev/null; then
+            echo "Sin base de comparación fiable (o despliegue forzado): se despliega todo."
+            MATRIX=$(jq -c '.' <<< "$TOOLS")
+          else
+            CAMBIADOS=$(git diff --name-only "$ANTES" "${{ github.sha }}" | jq -R -s -c 'split("\n") | map(select(length > 0))')
+            echo "Archivos cambiados: $(jq -r 'length' <<< "$CAMBIADOS")"
+            MATRIX=$(jq -c -n --argjson tools "$TOOLS" --argjson cambiados "$CAMBIADOS" '
+              [ $tools[]
+                | select( .paths | any( . as $p | $cambiados | any(startswith($p)) ) )
+              ]')
+          fi
+
+          # Nota: en jq la cadena vacía es "truthy", así que `join(...) // "ninguna"`
+          # NO caería al valor por defecto. Se comprueba la longitud explícitamente.
+          echo "A desplegar: $(jq -r 'if length == 0 then "ninguna" else [.[].name] | join(", ") end' <<< "$MATRIX")"
+          echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
+          # Una matriz vacía hace fallar el job hijo, así que se salta explícitamente.
+          echo "hay=$(jq -r 'length > 0' <<< "$MATRIX")" >> "$GITHUB_OUTPUT"
+
+  # ── 2. Desplegar cada tool seleccionada ────────────────────────────────────
+  deploy:
+    needs: plan
+    if: needs.plan.outputs.hay == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      # Que una tool falle NO debe cancelar el despliegue de las otras: son
+      # proyectos independientes y no comparten destino.
+      fail-fast: false
+      matrix:
+        tool: ${{ fromJson(needs.plan.outputs.matrix) }}
+
+    name: deploy ${{ matrix.tool.name }}
+
+    env:
+      # Acceso dinámico a secretos por nombre: así la matriz elige el token de cada
+      # proyecto sin repetir el job tres veces.
+      RAILWAY_TOKEN: ${{ secrets[matrix.tool.secret] }}
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Verificar que el token existe
+        run: |
+          if [ -z "$RAILWAY_TOKEN" ]; then
+            echo "::error::Falta el secreto '${{ matrix.tool.secret }}' para la tool '${{ matrix.tool.name }}'."
+            echo "Settings -> Secrets and variables -> Actions -> New repository secret"
+            exit 1
+          fi
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Instalar el CLI de Railway
+        run: npm i -g @railway/cli
+
+      # `--ci` transmite los logs de BUILD y termina cuando el build acaba: el job se
+      # pone en rojo si el build falla. `--detach` devolvería de inmediato y el
+      # workflow saldría verde aunque reventara.
+      - name: Desplegar ${{ matrix.tool.name }}
+        run: railway up --service "${{ matrix.tool.service }}" --ci
+
+      # `--ci` termina cuando acaba el BUILD, no cuando el servicio está sano.
+      - name: Esperar a que ${{ matrix.tool.name }} responda
+        if: ${{ !contains(matrix.tool.health, '<dominio>') }}
+        run: |
+          for i in $(seq 1 30); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "${{ matrix.tool.health }}" || echo 000)
+            if [ "$code" = "200" ]; then
+              echo "OK: ${{ matrix.tool.name }} respondió 200 en el intento $i"
+              exit 0
+            fi
+            echo "intento $i/30: HTTP $code — reintentando en 10 s"
+            sleep 10
+          done
+          echo "::error::${{ matrix.tool.name }} no respondió 200 tras 5 minutos."
+          exit 1

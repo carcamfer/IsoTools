@@ -12,6 +12,7 @@ Cada tool de cada equipo se despliega en **su propio subdominio** y es un relyin
 - **Roadmap del programador (1 → 9):** [`pasos/`](./pasos/)
 - **Referencia técnica de tools:** [`docs/GUIA_TOOLS.md`](./docs/GUIA_TOOLS.md)
 - **Contrato de SSO entre equipos:** [`docs/PLATAFORMA-SSO.md`](./docs/PLATAFORMA-SSO.md)
+- **Plantillas que cada equipo copia a su repo (SSO + despliegue):** [`plantillas/integracion/`](./plantillas/integracion/)
 - **Dashboard (frontend):** [`docs/DASHBOARD.md`](./docs/DASHBOARD.md)
 - **Segundo cerebro (Obsidian) + reglas de mantenimiento:** [`cerebro/CLAUDE.md`](./cerebro/CLAUDE.md)
 
@@ -25,6 +26,7 @@ Cada tool de cada equipo se despliega en **su propio subdominio** y es un relyin
 - **El frontend no toca `src/` y el backend no toca `web/`.** Se comunican solo por HTTP, contra `/api/v1/console/*`. Nada de imports cruzados ni de node_modules compartidos.
 - **Ninguna clave de API llega al navegador.** `/api/v1/events` es plano máquina (`x-api-key`); `/api/v1/console` es plano humano (cookie de sesión). Ningún endpoint sirve a los dos.
 - Este repo sigue sin tener **sitio web de marketing**. El dashboard es una consola de operación, no una página pública.
+- Lo de `plantillas/integracion/` **se copia a otros repos**, no se importa desde aquí. Si cambias `src/auth/` de forma que afecte el contrato (nombres de variables, forma de la cookie, claims), actualiza también la plantilla — son dos copias a propósito, porque una tool no depende del core para autenticar.
 
 ## Tres estados de una tool
 - `federated` — servicio propio, subdominio propio, equipo propio. El bus **no** ejecuta su handler nativo: ella consume por poll desde `/events/subscriptions/:toolId`.

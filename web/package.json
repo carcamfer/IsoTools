@@ -3,6 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
+  "packageManager": "pnpm@11.7.0",
   "description": "Dashboard orquestador de IsoTools. Frontend puro: no comparte node_modules, lockfile ni toolchain con el backend de `src/`. Se comunica solo por HTTP contra /api/v1/console/* del core.",
   "scripts": {
     "dev": "vite",

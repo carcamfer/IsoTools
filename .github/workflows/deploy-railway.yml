@@ -1,0 +1,197 @@
+# =============================================================================
+# Despliegue de la PLATAFORMA (este repo) a Railway.
+#
+# Este workflow es para el core + dashboard, no para las tools de los equipos.
+# Cada equipo despliega lo suyo con las plantillas de
+# `plantillas/integracion/despliegue/`, contra SU propio proyecto Railway.
+#
+# Dos trabajos, en este orden y no al revés:
+#   verificar  — corre también en pull request. Es la única red de seguridad que
+#                hay: este repo no tiene suite de pruebas.
+#   desplegar  — solo desde `main`, y solo si `verificar` pasó.
+#
+# SECRETOS que necesita (Settings -> Secrets and variables -> Actions):
+#   RAILWAY_TOKEN   token de PROYECTO de Railway (no de cuenta — ver
+#                   plantillas/integracion/despliegue/README.md §1)
+#
+# VARIABLES opcionales (misma pantalla, pestaña Variables):
+#   RAILWAY_SERVICE nombre del servicio en Railway   (por defecto: IsoTools)
+#   PLATFORM_URL    URL pública para el smoke test   (por defecto: la de producción)
+# =============================================================================
+name: Deploy IsoTools a Railway
+
+on:
+  push:
+    branches: [main]
+    # Documentación y material de apoyo no cambian la imagen. `plantillas/` se copia
+    # a otros repos: tocarla no altera lo que corre aquí.
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - "cerebro/**"
+      - "pasos/**"
+      - "recursos/**"
+      - "plantillas/**"
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# Dos merges seguidos no deben desplegar en paralelo y pisarse.
+# `cancel-in-progress: false` es deliberado: cortar un deploy a la mitad deja el
+# servicio en un estado que nadie eligió.
+concurrency:
+  group: deploy-isotools-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # ── 1. Verificación ────────────────────────────────────────────────────────
+  verificar:
+    name: Verificar
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # Corepack lee el campo `packageManager` de package.json y usa esa versión
+      # exacta de pnpm: el árbol que se resuelve aquí es el mismo que en Docker.
+      - run: corepack enable
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: |
+            pnpm-lock.yaml
+            web/pnpm-lock.yaml
+
+      - name: Instalar dependencias del core
+        run: pnpm install --frozen-lockfile
+
+      # No hay configuración de ESLint en el repo, así que `npm run lint` no
+      # comprueba nada. Esto sí: sintaxis de todo el backend.
+      - name: Comprobar sintaxis del backend
+        run: |
+          set -euo pipefail
+          find src scripts -name '*.js' -print0 | xargs -0 -n1 node --check
+          echo "OK: sintaxis del backend"
+
+      # El chequeo que de verdad protege al dashboard. Un `toolId` mal escrito en
+      # deployments.json no rompe nada: simplemente esa tool NUNCA aparece en la
+      # barra lateral, y su equipo tarda días en notar que su despliegue "no se ve".
+      - name: Validar integridad de los datos de plataforma
+        run: pnpm run validate
+
+      - name: Instalar dependencias del dashboard
+        run: pnpm install --frozen-lockfile
+        working-directory: web
+
+      - name: Typecheck del dashboard
+        run: pnpm run typecheck
+        working-directory: web
+
+      # Se compila aquí aunque Docker lo vuelva a hacer: fallar en 40 s es mejor
+      # que fallar tras un build completo de Railway.
+      - name: Compilar el dashboard
+        run: pnpm run build
+        working-directory: web
+
+  # ── 2. Despliegue ──────────────────────────────────────────────────────────
+  desplegar:
+    name: Desplegar
+    needs: verificar
+    # En un pull request solo se verifica. Desplegar desde una rama sin fusionar
+    # pondría en producción código que nadie aprobó.
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+
+    # Descomenta para exigir aprobación manual antes de producción.
+    # environment: production
+
+    env:
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      RAILWAY_SERVICE: ${{ vars.RAILWAY_SERVICE || 'IsoTools' }}
+      BASE_URL: ${{ vars.PLATFORM_URL || 'https://isotools-production.up.railway.app' }}
+
+    steps:
+      - uses: actions/checkout@v7
+
+      # Falla temprano y con un mensaje legible. Sin esto, un secreto faltante da un
+      # error del CLI que ni siquiera menciona la palabra "secreto".
+      - name: Verificar que el token existe
+        run: |
+          if [ -z "$RAILWAY_TOKEN" ]; then
+            echo "::error::Falta el secreto RAILWAY_TOKEN."
+            echo "Debe ser un token de PROYECTO (Proyecto -> Settings -> Tokens),"
+            echo "no uno de cuenta: un token de cuenta da 'Project Token not found'."
+            exit 1
+          fi
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Instalar el CLI de Railway
+        run: npm i -g @railway/cli
+
+      # `--ci` transmite los logs de BUILD y termina cuando el build acaba, así que
+      # el job se pone en rojo si el build falla. `--detach` devolvería de inmediato
+      # y el workflow saldría verde aunque reventara, que es la peor señal posible.
+      - name: Desplegar
+        run: railway up --service "$RAILWAY_SERVICE" --ci
+
+      # `--ci` termina cuando acaba el BUILD, no cuando el servicio está sano.
+      # Todo lo que sigue existe porque un workflow verde no prueba nada por sí solo.
+      - name: Esperar liveness
+        run: |
+          for i in $(seq 1 30); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "$BASE_URL/api/v1/health" || echo 000)
+            if [ "$code" = "200" ]; then echo "OK: /api/v1/health respondió 200 (intento $i)"; exit 0; fi
+            echo "intento $i/30: HTTP $code — reintentando en 10 s"
+            sleep 10
+          done
+          echo "::error::/api/v1/health no respondió 200 tras 5 minutos."
+          exit 1
+
+      # Liveness solo dice que el proceso responde. Esto dice que además hay base de
+      # datos, que es lo que el core necesita para servir de algo.
+      - name: Esperar readiness (comprueba Postgres)
+        run: |
+          for i in $(seq 1 12); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "$BASE_URL/api/v1/ready" || echo 000)
+            if [ "$code" = "200" ]; then echo "OK: /api/v1/ready respondió 200 (intento $i)"; exit 0; fi
+            echo "intento $i/12: HTTP $code — reintentando en 10 s"
+            sleep 10
+          done
+          echo "::error::/api/v1/ready no respondió 200: el core está vivo pero sin base de datos."
+          exit 1
+
+      # El core arranca y pasa /health perfectamente aunque `web/dist` no haya
+      # entrado en la imagen: simplemente sirve la API sin dashboard. Sin esta
+      # comprobación, ese fallo es invisible hasta que alguien abre la página.
+      # Un 200 (SSO apagado) o un 302 al IdP (SSO activo) son ambos correctos;
+      # un 404 significa que el SPA no se desplegó.
+      - name: Comprobar que el dashboard se está sirviendo
+        run: |
+          code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 15 -H 'Accept: text/html' "$BASE_URL/")
+          case "$code" in
+            200|302) echo "OK: el dashboard responde en / (HTTP $code)" ;;
+            404) echo "::error::GET / devolvió 404 — la imagen se desplegó sin web/dist."
+                 echo "Revisa la etapa 'web' del Dockerfile."
+                 exit 1 ;;
+            *)   echo "::error::GET / devolvió HTTP $code, que no se esperaba."
+                 exit 1 ;;
+          esac
+
+      - name: Resumen
+        run: |
+          {
+            echo "### IsoTools desplegado"
+            echo ""
+            echo "| Comprobación | Resultado |"
+            echo "| --- | --- |"
+            echo "| Liveness \`/api/v1/health\` | OK |"
+            echo "| Readiness \`/api/v1/ready\` | OK |"
+            echo "| Dashboard \`/\` | OK |"
+            echo ""
+            echo "URL: $BASE_URL"
+            echo "Commit: \`${{ github.sha }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"

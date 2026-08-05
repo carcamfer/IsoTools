@@ -20,6 +20,7 @@ Se comunican **solo por HTTP**. Nada de imports cruzados, nada de dependencias c
 - **Necesitas la referencia técnica** → **[`docs/GUIA_TOOLS.md`](./docs/GUIA_TOOLS.md)** (anatomía del handler, reglas de nombrado IES, comunicación, checklist).
 - **Quieres ver qué hace cada tool y con quién habla** → abre el **[cerebro Obsidian](./cerebro/)** (`cerebro/index.md`). Cómo usarlo y coordinarte con la otra tool: **[`pasos/10-cerebro-y-colaboracion.md`](./pasos/10-cerebro-y-colaboracion.md)**.
 - **Vas a levantar y probar el ambiente** → **[`docs/SIMULACION_PASO_A_PASO.md`](./docs/SIMULACION_PASO_A_PASO.md)**.
+- **Vas a poner login (SSO) y despliegue automático en tu tool** → **[`plantillas/integracion/`](./plantillas/integracion/)**. Código para copiar a tu repo: el módulo OIDC y el workflow de GitHub Actions que despliega a Railway. Lee antes el contrato: **[`docs/PLATAFORMA-SSO.md`](./docs/PLATAFORMA-SSO.md)**.
 
 ---
 
@@ -29,7 +30,10 @@ Se comunican **solo por HTTP**. Nada de imports cruzados, nada de dependencias c
 IsoTools/
 ├── README.md                  ← este archivo
 ├── pasos/                     ← roadmap del programador (1 → 9)
-├── plantillas/                ← esqueletos descargables (handler, meta, regla, placeholder…)
+├── plantillas/                ← lo que copias a TU repo
+│   ├── integracion/sso/       ← módulo OIDC listo para copiar (+ guía para otros stacks)
+│   ├── integracion/despliegue/ ← GitHub Actions → Railway (1 tool y varias tools)
+│   └── *.js · *.json          ← esqueletos de tool (handler, meta, regla, placeholder…)
 ├── recursos/                  ← diagramas y material de apoyo
 ├── docs/
 │   ├── GUIA_TOOLS.md          ← referencia técnica para crear una tool
