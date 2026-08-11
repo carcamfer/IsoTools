@@ -1,14 +1,16 @@
 # Plantillas de integración
 
 Lo que **cada equipo copia a su propio repo** para que su tool entre a la
-plataforma: autenticación única y despliegue automático.
+plataforma: autenticación única, empaquetado, despliegue automático e interfaz.
 
 Esto no se clona ni se hace fork. Se copian archivos.
 
 ```
 plantillas/integracion/
 ├── sso/           código OIDC listo para copiar + guía por stack
-└── despliegue/    GitHub Actions -> Railway (1 tool y varias tools)
+├── docker/        Dockerfile back (Node) + front (React) en una imagen
+├── despliegue/    GitHub Actions -> Railway (1 tool y varias tools)
+└── ui/            el tema Control Room — obligatorio si tu tool tiene pantalla
 ```
 
 ---
@@ -44,9 +46,15 @@ Aparte, para el plano máquina: tu **API key del core** (`x-api-key`) con scopes
 1. **[`sso/`](./sso/)** — copia el módulo, edita `role-mapping.js` con los roles de
    tu dominio, cablea las cinco piezas. Sin `OIDC_ISSUER` tu servicio sigue corriendo
    abierto, así que puedes avanzar antes de que exista el IdP.
-2. **[`despliegue/`](./despliegue/)** — copia el workflow, guarda tu token como
+2. **[`docker/`](./docker/)** — copia el Dockerfile: tu backend Node y tu frontend
+   React se construyen por separado y se despliegan en **una sola imagen**, por un
+   **solo origen**. No es empaquetado, es lo que hace que la cookie de sesión del
+   paso 1 sea first-party y que CORS no participe.
+3. **[`ui/`](./ui/)** — si tu tool tiene pantalla, el tema no se elige: se copia.
+   Cinco tools que se ven distinto son cinco aplicaciones para quien las usa.
+4. **[`despliegue/`](./despliegue/)** — copia el workflow, guarda tu token como
    secreto, apunta tu subdominio.
-3. **Regístrate en el core** — una entrada en
+5. **Regístrate en el core** — una entrada en
    [`src/data/platform/deployments.json`](../../src/data/platform/deployments.json)
    con tu `subdomain`, `owner`, `isoClause` y `requiredRoles`. Eso es lo que hace
    aparecer tu tool en la barra lateral del dashboard, sin tocar ni una línea del
@@ -77,3 +85,8 @@ nadie implementa OIDC a mano.
 
 El workflow de despliegue sirve tal cual para cualquier lenguaje: Railway construye
 desde tu Dockerfile y no le importa qué hay dentro.
+
+Del Dockerfile cambia el runtime, no la forma: **el frontend se compila en su propia
+etapa y el servicio final sirve el SPA, la API y `/auth/*` por un solo origen**
+([`docker/README.md` §1](./docker/README.md)). Y `ui/` es agnóstico al backend por
+completo: es CSS y React, y aplica igual si detrás hay Python o Go.

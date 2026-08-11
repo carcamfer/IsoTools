@@ -1,0 +1,35 @@
+# Copia a `.dockerignore` en la RAIZ de tu repo (donde esta el contexto de build).
+#
+# Dos errores de signo contrario y los dos duelen:
+#   - de menos: copias `node_modules` del host a la imagen. Cientos de MB, y con
+#     binarios compilados para el SO equivocado. Con pnpm es peor: su
+#     `node_modules` es una granja de symlinks a rutas ABSOLUTAS del host, que
+#     dentro del contenedor son enlaces rotos. Falla CUALQUIER import, no solo
+#     el de una devDependency.
+#   - de mas: excluyes `web/` "porque es el front" y el `COPY web/ ./` de la
+#     etapa de build falla con "no such file or directory". La ruta no esta
+#     ausente de tu disco: esta ausente del CONTEXTO.
+
+# `**/` es obligatorio. Sin el, Docker solo excluye el node_modules de la raiz y
+# copia el de `web/` dentro de la imagen.
+**/node_modules
+
+# Build output local. Las imagenes compilan desde fuente, nunca desde un dist/
+# que quedo en tu maquina — si no, despliegas lo que compilaste hace tres dias.
+dist
+**/dist
+coverage
+
+.git
+.env
+.env.*
+!.env.example
+npm-debug.log*
+*.log
+
+# Docs y compose: no son entrada de ningun build.
+*.md
+docker-compose*.yml
+
+# NO agregues aqui `web/` ni `src/` ni los lockfiles: son entrada de las etapas
+# de build del Dockerfile.

@@ -12,7 +12,7 @@ Cada tool de cada equipo se despliega en **su propio subdominio** y es un relyin
 - **Roadmap del programador (1 → 9):** [`pasos/`](./pasos/)
 - **Referencia técnica de tools:** [`docs/GUIA_TOOLS.md`](./docs/GUIA_TOOLS.md)
 - **Contrato de SSO entre equipos:** [`docs/PLATAFORMA-SSO.md`](./docs/PLATAFORMA-SSO.md)
-- **Plantillas que cada equipo copia a su repo (SSO + despliegue):** [`plantillas/integracion/`](./plantillas/integracion/)
+- **Plantillas que cada equipo copia a su repo (SSO + Docker + despliegue + UI):** [`plantillas/integracion/`](./plantillas/integracion/)
 - **Dashboard (frontend):** [`docs/DASHBOARD.md`](./docs/DASHBOARD.md)
 - **Segundo cerebro (Obsidian) + reglas de mantenimiento:** [`cerebro/CLAUDE.md`](./cerebro/CLAUDE.md)
 

@@ -1,0 +1,51 @@
+# Plantilla de nginx para `ui-nginx.Dockerfile`. La renderiza envsubst al
+# arrancar el contenedor; `${TOOL_ORIGIN}` es el servicio backend de TU tool
+# (p. ej. http://manage_nonconformances:8103).
+#
+# El SPA y la API salen del MISMO origen tambien aqui: la cookie de sesion sigue
+# siendo first-party, CORS no participa, y `EventSource` la lleva sola — ninguna
+# credencial acaba en una query string.
+
+server {
+  listen 80;
+  server_name _;
+  root /usr/share/nginx/html;
+  index index.html;
+
+  # Fallback de SPA: las rutas de cliente (/devices/:id) resuelven a index.html.
+  # Sin esto, recargar en una subruta da 404 y parece un bug del router.
+  location / {
+    try_files $uri $uri/ /index.html;
+  }
+
+  # Tu API. Mismo origen que el SPA de arriba, asi que el navegador manda la cookie.
+  location /api/ {
+    proxy_pass ${TOOL_ORIGIN};
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    # Server-Sent Events: sin buffering y sin read timeout, o el stream de cambios
+    # se queda congelado hasta que nginx corta la conexion.
+    proxy_buffering off;
+    proxy_cache off;
+    proxy_read_timeout 24h;
+  }
+
+  # Handshake OIDC: login, callback, logout y la sonda de sesion que lee el SPA.
+  location /auth/ {
+    proxy_pass ${TOOL_ORIGIN};
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  }
+
+  # Liveness del CONTENEDOR. Distinta del `/health` de tu tool, que vive detras
+  # de `/api`. Si las confundes, el dashboard puede ver verde un front que esta
+  # sirviendo HTML contra un backend caido.
+  location = /health {
+    add_header content-type application/json;
+    return 200 '{"status":"ok"}';
+  }
+}

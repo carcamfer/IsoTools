@@ -20,7 +20,8 @@ Se comunican **solo por HTTP**. Nada de imports cruzados, nada de dependencias c
 - **Necesitas la referencia técnica** → **[`docs/GUIA_TOOLS.md`](./docs/GUIA_TOOLS.md)** (anatomía del handler, reglas de nombrado IES, comunicación, checklist).
 - **Quieres ver qué hace cada tool y con quién habla** → abre el **[cerebro Obsidian](./cerebro/)** (`cerebro/index.md`). Cómo usarlo y coordinarte con la otra tool: **[`pasos/10-cerebro-y-colaboracion.md`](./pasos/10-cerebro-y-colaboracion.md)**.
 - **Vas a levantar y probar el ambiente** → **[`docs/SIMULACION_PASO_A_PASO.md`](./docs/SIMULACION_PASO_A_PASO.md)**.
-- **Vas a poner login (SSO) y despliegue automático en tu tool** → **[`plantillas/integracion/`](./plantillas/integracion/)**. Código para copiar a tu repo: el módulo OIDC y el workflow de GitHub Actions que despliega a Railway. Lee antes el contrato: **[`docs/PLATAFORMA-SSO.md`](./docs/PLATAFORMA-SSO.md)**.
+- **Vas a poner login (SSO) y despliegue automático en tu tool** → **[`plantillas/integracion/`](./plantillas/integracion/)**. Código para copiar a tu repo: el módulo OIDC, el Dockerfile que empaqueta tu backend y tu frontend en una imagen, y el workflow de GitHub Actions que despliega a Railway. Lee antes el contrato: **[`docs/PLATAFORMA-SSO.md`](./docs/PLATAFORMA-SSO.md)**.
+- **Tu tool va a tener pantalla** → **[`plantillas/integracion/ui/`](./plantillas/integracion/ui/)**. El tema Control Room —colores, tipografía, espaciado, estructura y componentes— es obligatorio: las cinco tools tienen que verse como una sola aplicación.
 
 ---
 
@@ -32,7 +33,9 @@ IsoTools/
 ├── pasos/                     ← roadmap del programador (1 → 9)
 ├── plantillas/                ← lo que copias a TU repo
 │   ├── integracion/sso/       ← módulo OIDC listo para copiar (+ guía para otros stacks)
+│   ├── integracion/docker/    ← Dockerfile: backend Node + frontend React en una imagen
 │   ├── integracion/despliegue/ ← GitHub Actions → Railway (1 tool y varias tools)
+│   ├── integracion/ui/        ← tema Control Room: tokens, AppShell y componentes
 │   └── *.js · *.json          ← esqueletos de tool (handler, meta, regla, placeholder…)
 ├── recursos/                  ← diagramas y material de apoyo
 ├── docs/

@@ -54,13 +54,18 @@ cp plantillas/integracion/despliegue/deploy-railway-multi.yml .github/workflows/
 
 Copia también `railway.toml` a la raíz de tu repo y ajústalo.
 
+Y antes de que esto sirva de algo, tu repo necesita un Dockerfile: Railway
+construye desde él. Si todavía no lo tienes, empieza por
+[`../docker/`](../docker/).
+
 En la versión multi, **lo único que editas es el bloque `TOOLS`**: por cada tool, su
 `service`, el nombre de su `secret`, su URL de `health` y los `paths` que la afectan.
 
 ## 3. Varias tools en un repo (monorepo)
 
 Es el caso de `ai-iso`: un repo, tres Dockerfiles en `docker/`, tres proyectos
-Railway.
+Railway. Los Dockerfiles salen de [`../docker/`](../docker/) — uno por tool, cada
+uno empaquetando su backend y su frontend en una sola imagen.
 
 ### Cómo sabe cada proyecto qué Dockerfile construir
 

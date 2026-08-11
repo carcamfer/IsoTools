@@ -1,0 +1,81 @@
+# =============================================================================
+# PLANTILLA — levantar TU tool en local, como se va a desplegar.
+# Copia a `docker-compose.yml` en la raiz de tu repo.
+#
+#   docker compose up --build          tu tool + su base
+#   docker compose --profile ui up     ademas el SPA en un contenedor aparte
+#
+# Con esto pruebas la imagen REAL antes de desplegarla, que es donde aparecen
+# los fallos que `pnpm dev` nunca muestra: puerto fijo, `.dockerignore` mal
+# puesto, `UI_DIST_DIR` apuntando a nada.
+# =============================================================================
+services:
+  tool:
+    build:
+      context: .
+      dockerfile: docker/tool.Dockerfile          # <-- EDITA
+    container_name: mi-tool                        # <-- EDITA
+    ports:
+      - "8101:8101"                                # <-- EDITA
+    environment:
+      - PORT=8101
+      - DATABASE_URL=postgresql://tool:tool@db:5432/tool
+      # Plano MAQUINA hacia el core. Servidor a servidor: esta clave NUNCA llega
+      # al navegador. Si alguien propone llamar al core desde el SPA "para
+      # simplificar", la propuesta es filtrar la clave.
+      - ISOTOOLS_API_URL=http://host.docker.internal:3000/api/v1
+      - ISOTOOLS_API_KEY=${ISOTOOLS_API_KEY:-}
+      # Plano HUMANO. Sin OIDC_ISSUER tu servicio corre ABIERTO, que es justo lo
+      # que quieres en local mientras plataforma da de alta tu cliente.
+      - OIDC_ISSUER=${OIDC_ISSUER:-}
+      - OIDC_CLIENT_ID=${OIDC_CLIENT_ID:-}
+      - OIDC_CLIENT_SECRET=${OIDC_CLIENT_SECRET:-}
+      - OIDC_REDIRECT_URI=http://localhost:8101/auth/callback
+      - SESSION_SECRET=${SESSION_SECRET:-solo-para-local-cambiame-0000000000}
+      # En local corres sobre HTTP plano; con `Secure` puesto el navegador
+      # descarta la cookie y el login "no hace nada" sin ningun error visible.
+      - SESSION_INSECURE_COOKIES=true
+    extra_hosts:
+      # Alcanza el core de IsoTools corriendo en TU maquina, fuera de este compose.
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # Solo si usas la variante `ui-nginx.Dockerfile`. Con `tool.Dockerfile` el SPA
+  # ya viaja dentro de la imagen de arriba y este servicio sobra.
+  ui:
+    profiles: ["ui"]
+    build:
+      context: .
+      dockerfile: docker/ui-nginx.Dockerfile
+    ports:
+      - "5173:80"
+    environment:
+      # Nombre del servicio, no localhost: dentro de la red de compose
+      # `localhost` es el propio contenedor de nginx.
+      - TOOL_ORIGIN=http://tool:8101
+    depends_on:
+      - tool
+
+  db:
+    image: postgres:16
+    environment:
+      - POSTGRES_USER=tool
+      - POSTGRES_PASSWORD=tool
+      - POSTGRES_DB=tool
+    ports:
+      - "5433:5432"                                # <-- EDITA si ya tienes un 5432 ocupado
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    # `depends_on: condition: service_healthy` sin healthcheck no espera nada:
+    # el contenedor "existe" mucho antes de que Postgres acepte conexiones, y tu
+    # tool arranca contra una base que todavia no escucha.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tool -d tool"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  db_data:

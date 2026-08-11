@@ -31,7 +31,22 @@ services:
       # contenedor. Para ver el SPA servido por el core, corre antes
       # `npm run web:build` o levanta la imagen sin el mount.
       - .:/app
-    command: npm run dev
+      # Volumen anonimo que "tapa" justo esta subruta del bind mount de arriba, asi
+      # que /app/node_modules queda siendo el de la IMAGEN (instalado con pnpm
+      # DENTRO del contenedor) y no el del host.
+      #
+      # Es obligatorio con pnpm: su node_modules es una granja de symlinks que
+      # apuntan a rutas ABSOLUTAS del host (p. ej.
+      # /d/Projects/IsoTools-main/node_modules/.pnpm/express@.../...). Un bind mount
+      # copia el symlink tal cual, pero esa ruta no existe dentro del contenedor —
+      # cada paquete queda como un enlace roto y CUALQUIER `require`/`import` falla,
+      # no solo el de una devDependency.
+      - /app/node_modules
+    # `node --watch` en vez de nodemon: nodemon es devDependency, y con el volumen
+    # anonimo de arriba el contenedor solo trae las dependencias de produccion
+    # (ver Dockerfile). `--watch` es nativo de Node 22+, cubre el mismo caso de uso
+    # sin necesitar un paquete extra.
+    command: node --watch src/server.js
 
   db:
     profiles: ["api", "seed"]
