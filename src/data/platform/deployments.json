@@ -73,11 +73,18 @@
       "kind": "federated",
       "status": "live",
       "isoClause": "9.1.3",
-      "owner": "pendiente de asignar",
-      "note": "El handler nativo se retiró en a0c9e50 porque un servicio EXTERNO ya era dueño de esta tool y el bus producía OUT_OF_CONTROL_DETECTED por duplicado. Falta que su equipo declare aquí su `subdomain` y su `owner`; mientras tanto el dashboard la muestra como registrada sin desplegar, que es la verdad."
+      "owner": "Rumbar",
+      "note": "El handler nativo se retiró en a0c9e50 porque un servicio EXTERNO ya era dueño de esta tool y el bus producía OUT_OF_CONTROL_DETECTED por duplicado. `subdomain` pendiente hasta que exista el Service en Railway."
     },
     { "toolId": "generate_8d_report", "kind": "native", "status": "live", "isoClause": "10.2" },
-    { "toolId": "analyze_failure_modes", "kind": "native", "status": "live", "isoClause": "6.1" },
+    {
+      "toolId": "analyze_failure_modes",
+      "kind": "federated",
+      "status": "live",
+      "isoClause": "6.1",
+      "owner": "Rumbar",
+      "note": "Migrada a servicio EXTERNO junto con detect_out_of_control_signals (mismo equipo, mismo repo). El handler nativo en src/tools/analyze_failure_modes.js sigue en el repo pero es inofensivo: nunca tuvo una regla en communication-rules.json que lo disparara automático (`consumes: []` por diseño), así que no hay riesgo de duplicado como en el caso de detect_out_of_control_signals. `subdomain` pendiente hasta que exista el Service en Railway."
+    },
     { "toolId": "calculate_cpk_ppk", "kind": "native", "status": "live", "isoClause": "9.1.3" },
     { "toolId": "run_msa_analysis", "kind": "native", "status": "live", "isoClause": "7.1.5.2" },
     { "toolId": "detect_business_anomalies", "kind": "native", "status": "live", "isoClause": "9.1.3" },
