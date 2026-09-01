@@ -134,7 +134,46 @@ Railway ──HTTPS──► erp-planta1.orcalabs.mx ──► red Cloudflare
                                           cloudflared ─┘ → http://localhost:5000 (app.py)
 ```
 
-**En la máquina del ERP (una sola vez):**
+#### Paso 0 — el DNS de `orcalabs.mx` tiene que estar en Cloudflare
+
+El dominio está registrado en **GoDaddy**, y el túnel necesita crear un registro
+`CNAME` hacia `<TUNNEL-ID>.cfargotunnel.com`, que **solo existe dentro de
+Cloudflare**. No se puede crear desde el panel de GoDaddy.
+
+La solución no es transferir el dominio: **el registro se queda en GoDaddy** y
+solo se mueve el **DNS** (gratis, plan Free).
+
+1. En `dash.cloudflare.com` → **Add a domain** → `orcalabs.mx` → plan **Free**.
+2. Cloudflare escanea los registros actuales. **Revísalos uno por uno antes de
+   continuar**: al cambiar los nameservers, todo lo que no esté en esta lista
+   deja de resolver. Ojo especialmente con los **MX** si ya tienes correo en el
+   dominio — si faltan, el correo se cae.
+3. Cloudflare te da dos nameservers (`algo.ns.cloudflare.com`).
+4. En GoDaddy: *Mis productos → el dominio → **Nameservers** → Change →
+   "I'll use my own nameservers"* → pega los dos de Cloudflare.
+5. Espera a que el dominio aparezca **Active** en Cloudflare (suele ser menos de
+   una hora, el máximo teórico son 24).
+
+#### Paso 1 — crear el túnel (desde el dashboard, recomendado)
+
+Es el camino más simple en Windows: un solo comando en la planta, y el registro
+DNS lo crea Cloudflare por ti.
+
+1. *Zero Trust → **Networks → Tunnels** → Create a tunnel → **Cloudflared***.
+2. Nómbralo `erp-planta1`. Cloudflare te muestra un comando de instalación para
+   Windows con un token largo — **ejecútalo en la máquina del ERP** como
+   administrador. Eso instala `cloudflared` como **servicio de Windows**, así que
+   arranca solo tras un reinicio.
+3. En **Public Hostnames → Add a public hostname**:
+   - Subdomain: `erp-planta1` · Domain: `orcalabs.mx`
+   - Type: `HTTP` · URL: `localhost:5000`  ← donde escucha `app.py`
+4. El túnel debe aparecer **HEALTHY** y el `CNAME` se crea solo.
+
+Ventaja extra: la configuración vive en el dashboard, así que cambiar el puerto o
+agregar otro hostname no obliga a volver a entrar a la máquina de la planta.
+
+<details>
+<summary>Alternativa: túnel administrado por archivo (CLI)</summary>
 
 ```powershell
 winget install --id Cloudflare.cloudflared
@@ -159,18 +198,28 @@ ingress:
 ```powershell
 cloudflared service install    # queda como servicio de Windows: sobrevive al reinicio
 ```
+</details>
 
-**Proteger el túnel con Cloudflare Access (service token):**
+#### Paso 2 — proteger el túnel con Cloudflare Access
 
-Sin esto, el hostname queda público. En *Zero Trust → Access → Applications*:
+Sin esto el hostname queda **público en internet**. Primero el token, luego la
+aplicación que lo exige:
 
-1. **Add an application → Self-hosted**, hostname `erp-planta1.orcalabs.mx`.
-2. Policy con acción **Service Auth** (no "Allow": el conector no es una persona
-   y no puede pasar por un login interactivo).
-3. *Access → Service Auth → Create Service Token*. Guarda el **Client ID** y el
-   **Client Secret** — el secreto se muestra una sola vez.
+1. *Zero Trust → **Access → Service Auth → Create Service Token***. Nómbralo
+   `isotools-connector`. Guarda el **Client ID** (termina en `.access`) y el
+   **Client Secret** — el secreto se muestra **una sola vez**.
+2. *Zero Trust → **Access → Applications** → Add an application → **Self-hosted***.
+   Subdomain `erp-planta1`, domain `orcalabs.mx`.
+3. En la policy: acción **Service Auth**, e *Include → Service Token →
+   `isotools-connector`*.
 
-**En Railway (variables de la plataforma):**
+Dos trampas frecuentes:
+
+- **No uses "Allow"**: exige un login interactivo y el conector no es una
+  persona. Tiene que ser **Service Auth**.
+- **No uses "Bypass"**: eso deja la aplicación abierta a cualquiera.
+
+#### Paso 3 — variables en Railway
 
 ```bash
 CONNECTORS_ENABLED=true
@@ -183,7 +232,7 @@ CF_ACCESS_CLIENT_SECRET=<client secret del service token>
 El conector manda esas dos cabeceras solo si las variables existen, así que el
 mismo JSON sirve con o sin Access (en local, sin ellas, no estorban).
 
-**Comprobación desde fuera de la planta:**
+#### Paso 4 — comprobar desde fuera de la planta
 
 ```bash
 curl -H "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" \
