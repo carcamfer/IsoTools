@@ -1,0 +1,170 @@
+{
+  "id": "erp_microsip",
+  "name": "ERP Microsip (gateway edge en planta)",
+  "description": "Lee inventario y ventas del ERP local via app.py y los publica en Industrial Events con el estandar ORCA. Las Tools NO hablan con el ERP: reciben estos eventos por el Communication Router.",
+  "enabled": true,
+  "intervalMs": 60000,
+  "module": {
+    "id": "erp_connector",
+    "version": "1.0.0"
+  },
+  "source": {
+    "type": "http",
+    "baseUrlEnv": "ERP_GATEWAY_URL",
+    "apiKeyEnv": "ERP_GATEWAY_KEY",
+    "apiKeyHeader": "X-API-Key",
+    "timeoutMs": 15000,
+    "headers": {
+      "CF-Access-Client-Id": "$env.CF_ACCESS_CLIENT_ID",
+      "CF-Access-Client-Secret": "$env.CF_ACCESS_CLIENT_SECRET"
+    }
+  },
+  "asset": {
+    "asset_id": "erp-microsip-01",
+    "asset_type": "erp",
+    "plant_id": "plant_01",
+    "area_id": "administration",
+    "location": "servidor-erp"
+  },
+  "params": {
+    "erpType": "microsip",
+    "warehouseId": "ALM-01",
+    "minStock": 10
+  },
+  "metadata": {
+    "notes": "origen: conector central ORCA · ERP Microsip"
+  },
+  "pulls": [
+    {
+      "id": "inventario",
+      "path": "/api/inventario",
+      "query": {
+        "limit": 200
+      },
+      "fields": {
+        "articuloId": "ARTICULO_ID",
+        "skuId": "CLAVE",
+        "nombre": "ARTICULO",
+        "quantity": "EXISTENCIA"
+      },
+      "emits": [
+        {
+          "mode": "summary",
+          "event": {
+            "type": "ERP_DATA_SYNCED",
+            "category": "productivity",
+            "severity": "low"
+          },
+          "data": {
+            "erpType": "$params.erpType",
+            "warehouseId": "$params.warehouseId",
+            "recordsSynced": "$count",
+            "syncTimestamp": "$now",
+            "errors": 0,
+            "tables": [
+              "inventario"
+            ]
+          }
+        },
+        {
+          "mode": "rows",
+          "when": "$row.quantity <= $params.minStock",
+          "key": "$row.articuloId",
+          "event": {
+            "type": "ERP_STOCK_BELOW_MINIMUM",
+            "category": "productivity",
+            "severity": "medium"
+          },
+          "data": {
+            "skuId": "$row.skuId",
+            "articuloId": "$row.articuloId",
+            "nombre": "$row.nombre",
+            "quantity": "$row.quantity",
+            "minStock": "$params.minStock",
+            "warehouseId": "$params.warehouseId",
+            "alert": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "ventas",
+      "path": "/api/ventas",
+      "query": {
+        "limit": 100
+      },
+      "cursor": {
+        "param": "desde_id",
+        "field": "DOCTO_VE_ID",
+        "type": "number"
+      },
+      "fields": {
+        "doctoId": "DOCTO_VE_ID",
+        "folio": "FOLIO",
+        "fecha": "FECHA",
+        "tipoDocto": "TIPO_DOCTO",
+        "importe": "IMPORTE_NETO",
+        "estatus": "ESTATUS"
+      },
+      "emits": [
+        {
+          "mode": "rows",
+          "key": "$row.doctoId",
+          "event": {
+            "type": "ERP_SALES_ORDER_REGISTERED",
+            "category": "productivity",
+            "severity": "low"
+          },
+          "data": {
+            "orderId": "$row.doctoId",
+            "folio": "$row.folio",
+            "date": "$row.fecha",
+            "documentType": "$row.tipoDocto",
+            "amount": "$row.importe",
+            "status": "$row.estatus",
+            "erpType": "$params.erpType"
+          }
+        }
+      ]
+    },
+    {
+      "id": "compras",
+      "enabled": false,
+      "path": "/api/compras",
+      "query": {
+        "limit": 100
+      },
+      "cursor": {
+        "param": "desde_id",
+        "field": "DOCTO_CM_ID",
+        "type": "number"
+      },
+      "fields": {
+        "doctoId": "DOCTO_CM_ID",
+        "folio": "FOLIO",
+        "fecha": "FECHA",
+        "importe": "IMPORTE_NETO",
+        "estatus": "ESTATUS"
+      },
+      "emits": [
+        {
+          "mode": "rows",
+          "key": "$row.doctoId",
+          "event": {
+            "type": "ERP_PURCHASE_ORDER_REGISTERED",
+            "category": "productivity",
+            "severity": "low"
+          },
+          "data": {
+            "orderId": "$row.doctoId",
+            "folio": "$row.folio",
+            "date": "$row.fecha",
+            "amount": "$row.importe",
+            "status": "$row.estatus",
+            "erpType": "$params.erpType"
+          }
+        }
+      ]
+    }
+  ]
+}

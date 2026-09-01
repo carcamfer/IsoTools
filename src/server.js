@@ -11,6 +11,8 @@
 //   GET  /api/v1/events/subscriptions/:toolId   solo lo que esa tool declara consumir
 //   GET  /api/v1/events/chain/:correlationId    cadena causal
 //   GET  /api/v1/catalog/*                       contrato publico (event standard + catalogo)
+//   GET  /api/v1/connectors                     estado del plano de conectores
+//   POST /api/v1/connectors/:id/run             forzar un ciclo de ingesta ERP/PLC
 //   GET  /api/v1/health                          liveness
 //   GET  /api/v1/ready                           readiness (comprueba DB)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -22,6 +24,8 @@ import { bootstrapApiKey } from './db/bootstrapApiKey.js';
 import pool, { pingDb } from './db/index.js';
 import eventsRouter from './routes/eventsRoutes.js';
 import catalogRouter from './routes/catalogRoutes.js';
+import connectorsRouter from './routes/connectorRoutes.js';
+import { startConnectors, stopConnectors } from './connectors/runtime.js';
 
 const app = express();
 
@@ -35,6 +39,8 @@ app.use(morgan(config.logLevel));
 // API de tools y catalogo.
 app.use('/api/v1/events', eventsRouter);
 app.use('/api/v1/catalog', catalogRouter);
+// Plano de conectores: ERP/PLC -> conector -> Industrial Events -> router -> tools.
+app.use('/api/v1/connectors', connectorsRouter);
 
 // Liveness: el proceso responde (no toca la DB, no debe fallar por la base).
 app.get('/api/v1/health', (req, res) => {
@@ -70,6 +76,14 @@ const server = await new Promise((resolve) => {
     .finally(() => {
     const s = app.listen(config.port, () => {
       console.log(`IsoTools · plataforma de eventos en http://localhost:${config.port}`);
+      // Conectores: los arrancamos DESPUES de escuchar para no retrasar el
+      // healthcheck de Railway. Si fallan, la API sigue en pie.
+      if (config.connectors.enabled) {
+        startConnectors().catch((err) =>
+          console.error('[connectors] no se pudieron arrancar (no fatal):', err.message));
+      } else {
+        console.log('[connectors] deshabilitados (CONNECTORS_ENABLED=false)');
+      }
       resolve(s);
     });
   });
@@ -83,6 +97,7 @@ async function shutdown (signal) {
   if (shuttingDown) return;
   shuttingDown = true;
   console.log(`[shutdown] ${signal} recibido; drenando...`);
+  stopConnectors(); // deja de sondear el ERP antes de cerrar el pool
   const forced = setTimeout(() => {
     console.error('[shutdown] tiempo agotado; salida forzada');
     process.exit(1);

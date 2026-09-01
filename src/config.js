@@ -60,6 +60,26 @@ export const config = {
     chainTimeoutMs: int("BUS_CHAIN_TIMEOUT_MS", 8000),
   },
 
+  // -- Conectores (ERP/PLC -> Industrial Events) ------------------------------
+  // El plano de conectores vive en la plataforma central: las Tools ya NO se
+  // conectan al ERP/PLC. Aqui se controla cada cuanto sondean, contra que
+  // gateway y como entregan los eventos (dentro del proceso o por HTTP).
+  connectors: {
+    enabled: bool("CONNECTORS_ENABLED", false),
+    intervalMs: int("CONNECTORS_INTERVAL_MS", 60000),
+    startDelayMs: int("CONNECTORS_START_DELAY_MS", 5000),
+    maxBackoffMs: int("CONNECTORS_MAX_BACKOFF_MS", 900000),
+    sourceTimeoutMs: int("CONNECTORS_SOURCE_TIMEOUT_MS", 15000),
+    publishTimeoutMs: int("CONNECTORS_PUBLISH_TIMEOUT_MS", 10000),
+    // "inprocess": escribe directo en industrial_events y dispara el bus.
+    // "http": publica con POST /api/v1/events (conector como Service aparte).
+    publishMode: (process.env.CONNECTORS_PUBLISH_MODE || "inprocess").toLowerCase(),
+    centralApiUrl: process.env.CENTRAL_API_URL || "http://localhost:3000",
+    centralApiKey: process.env.CENTRAL_API_KEY || "",
+    defaultGatewayUrl: process.env.ERP_GATEWAY_URL || "",
+    platformVersion: process.env.PLATFORM_VERSION || "1.0",
+  },
+
   // Margen para el apagado ordenado (drenar requests en vuelo antes de salir).
   shutdownGraceMs: int("SHUTDOWN_GRACE_MS", 10000),
 };

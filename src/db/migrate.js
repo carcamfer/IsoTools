@@ -15,6 +15,16 @@ const STATEMENTS = [
   "CREATE INDEX IF NOT EXISTS idx_industrial_events_seq ON industrial_events (seq)",
   "CREATE INDEX IF NOT EXISTS idx_industrial_events_type_seq ON industrial_events (event_type, seq DESC)",
   "CREATE INDEX IF NOT EXISTS idx_industrial_events_module_seq ON industrial_events (module_id, seq DESC)",
+  `CREATE TABLE IF NOT EXISTS connector_state (
+     connector_id TEXT NOT NULL,
+     pull_id      TEXT NOT NULL,
+     cursor       TEXT,
+     last_run_at  TIMESTAMPTZ,
+     last_status  TEXT,
+     last_error   TEXT,
+     stats        JSONB NOT NULL DEFAULT '{}'::jsonb,
+     PRIMARY KEY (connector_id, pull_id)
+   )`,
 ];
 
 // El indice unico se intenta aparte: si ya hay event_id duplicados de datos

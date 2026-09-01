@@ -8,13 +8,16 @@
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
     "lint": "eslint .",
+    "test": "node --test \"src/**/*.test.js\"",
     "db:migrate": "psql $DATABASE_URL -f db/init.sql",
     "seed:events": "node scripts/seedEvents.js",
     "seed:stream": "node scripts/simulateStream.js",
     "sim:iso": "node scripts/test_package_iso.js",
     "apikey:create": "node scripts/createApiKey.js",
     "cerebro:generar": "node scripts/generar-cerebro.js",
-    "rama:comm": "node scripts/crear-rama-comunicacion.js"
+    "rama:comm": "node scripts/crear-rama-comunicacion.js",
+    "erp:sync": "node scripts/erpSync.js",
+    "erp:gateway": "python3 app.py"
   },
   "dependencies": {
     "ajv": "^8.18.0",

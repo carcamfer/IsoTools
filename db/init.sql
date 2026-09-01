@@ -47,6 +47,20 @@ CREATE INDEX IF NOT EXISTS idx_industrial_events_seq ON industrial_events (seq);
 CREATE INDEX IF NOT EXISTS idx_industrial_events_type_seq ON industrial_events (event_type, seq DESC);
 CREATE INDEX IF NOT EXISTS idx_industrial_events_module_seq ON industrial_events (module_id, seq DESC);
 
+-- Estado del plano de conectores (ERP/PLC -> Industrial Events): un renglon por
+-- recurso sondeado, con su cursor de lectura incremental y el resultado del
+-- ultimo ciclo. Sin esto, un redeploy volveria a leer el ERP desde cero.
+CREATE TABLE IF NOT EXISTS connector_state (
+    connector_id TEXT NOT NULL,
+    pull_id      TEXT NOT NULL,
+    cursor       TEXT,
+    last_run_at  TIMESTAMPTZ,
+    last_status  TEXT,
+    last_error   TEXT,
+    stats        JSONB NOT NULL DEFAULT '{}'::jsonb,
+    PRIMARY KEY (connector_id, pull_id)
+);
+
 CREATE TABLE IF NOT EXISTS api_keys (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     key_hash TEXT NOT NULL UNIQUE,

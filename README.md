@@ -13,6 +13,7 @@ Repositorio **único y enfocado** para construir las *tools* de los agentes indu
 - **Necesitas la referencia técnica** → **[`docs/GUIA_TOOLS.md`](./docs/GUIA_TOOLS.md)** (anatomía del handler, reglas de nombrado IES, comunicación, checklist).
 - **Quieres ver qué hace cada tool y con quién habla** → abre el **[cerebro Obsidian](./cerebro/)** (`cerebro/index.md`). Cómo usarlo y coordinarte con la otra tool: **[`pasos/10-cerebro-y-colaboracion.md`](./pasos/10-cerebro-y-colaboracion.md)**.
 - **Vas a levantar y probar el ambiente** → **[`docs/SIMULACION_PASO_A_PASO.md`](./docs/SIMULACION_PASO_A_PASO.md)**.
+- **Necesitas datos del ERP / PLC en tu tool** → **NO te conectes al ERP**. La plataforma central tiene los conectores: leen el sistema externo, lo traducen al estándar ORCA y lo publican en Industrial Events; el Communication Router te lo entrega. Todo el detalle en **[`docs/ERP_CENTRAL.md`](./docs/ERP_CENTRAL.md)**.
 
 ---
 
@@ -37,6 +38,8 @@ IsoTools/
 │   ├── services/              ← eventBus · eventsService · validationService · catalogService · cache
 │   ├── controllers/           ← eventsController · catalogController
 │   ├── routes/                ← eventsRoutes · catalogRoutes
+│   ├── connectors/            ← conectores ERP/PLC → Industrial Events (ver docs/ERP_CENTRAL.md)
+│   ├── data/connectors/       ← un JSON por sistema externo conectado
 │   ├── middleware/            ← apiKeyAuth · rateLimit
 │   └── db/                    ← conexión, migración y capacidades de Postgres
 ├── scripts/
