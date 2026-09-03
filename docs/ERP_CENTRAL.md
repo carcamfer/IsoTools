@@ -120,6 +120,44 @@ FB_CHARSET=WIN1252
 > `/api/compras` consulta `DOCTOS_CM`. Verifica ese nombre contra tu base de
 > Microsip antes de habilitar el pull correspondiente (viene `enabled: false`).
 
+### Puesta en marcha en la máquina del ERP (Windows)
+
+```bat
+git pull                              :: o copia app.py y requirements.txt
+pip install -r requirements.txt
+
+:: Variables de esta consola. Los defaults son los de Microsip, así que si el
+:: ERP es el de siempre basta con ERP_API_KEY y FB_PASSWORD.
+set ERP_API_KEY=<cadena larga aleatoria>
+set FB_PASSWORD=<password de SYSDBA>
+set ERP_GATEWAY_PORT=5000
+
+python app.py
+```
+
+Comprueba **en la propia máquina** antes de salir por el túnel:
+
+```bat
+curl http://localhost:5000/health     :: responde el proceso
+curl http://localhost:5000/ready      :: ademas consulta Firebird de verdad
+```
+
+`/ready` es la prueba que importa: si devuelve `not_ready`, el problema es la
+conexión al ERP (ruta del `.FDB`, password, puerto 3050), no el túnel.
+
+**Que sobreviva a los reinicios.** `cloudflared` ya quedó como servicio de
+Windows, pero el gateway no: si se reinicia el servidor y nadie vuelve a
+ejecutar `python app.py`, el túnel sigue arriba y **devuelve 502 en silencio**.
+Déjalo como servicio con [NSSM](https://nssm.cc/) —
+`nssm install orca-erp-gateway` — o como tarea del Programador de tareas con
+disparador *"Al iniciar el equipo"*. Ahí mismo se definen las variables de
+entorno, que es más seguro que dejarlas en una consola.
+
+**Si `/health` devuelve 404** a través del túnel, la máquina está corriendo una
+versión vieja de `app.py`: la respuesta es la página de error de Flask, o sea que
+el túnel sí llegó al gateway pero esa ruta no existe en ese código. Actualiza el
+archivo y reinicia el proceso.
+
 ### Publicarlo hacia la nube — Cloudflare Tunnel
 
 Railway **no puede entrar** a la red de la planta. La solución adoptada es un
