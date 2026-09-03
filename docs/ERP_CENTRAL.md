@@ -241,8 +241,32 @@ curl -H "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" \
 # {"status":"ok","service":"orca-erp-edge-gateway","mode":"firebird",...}
 ```
 
-Sin las cabeceras debe responder el login de Access, **no** el JSON. Si responde
-el JSON, la policy no está aplicada.
+El mismo `curl` **sin** las cabeceras debe responder **403** con la página de
+bloqueo de Cloudflare Access (la que muestra `Ray ID` y `App AUD`). Ese 403 es la
+señal de que el ERP quedó protegido — no es un error. Con una policy de solo
+**Service Auth** no hay login interactivo, así que Access deniega de una vez en
+lugar de mandar a una pantalla de inicio de sesión.
+
+Si sin cabeceras responde el **JSON**, la policy no está aplicada y el ERP está
+expuesto a internet.
+
+Si **con** las cabeceras también da 403, el diagnóstico está en
+*Zero Trust → **Logs → Access***: ahí aparece la petición con el motivo del
+rechazo y la policy que se evaluó (búscala por el `Ray ID` de la página de
+bloqueo). Las causas habituales:
+
+- El **Client ID** va incompleto: es el valor entero, incluido el sufijo `.access`.
+- El **Client Secret** no es el correcto. Solo se muestra al crearlo; si se
+  perdió, hay que generar un token nuevo.
+- La policy no tiene *Include → Service Token*, o apunta a otro token.
+- La acción de la policy no es **Service Auth**.
+- **Hay otra aplicación de Access que gana**: si existe una para `orcalabs.mx` o
+  `*.orcalabs.mx`, puede estar atendiendo el hostname antes que la de
+  `erp-planta1`. El campo `App AUD` de la página de bloqueo dice **qué**
+  aplicación denegó: compáralo con el *Application Audience (AUD)* que aparece en
+  el Overview de cada app.
+- El token expiró (los service tokens tienen duración; se ve en *Access →
+  Service Auth*).
 
 **Tres capas de defensa**, y ninguna sustituye a la otra:
 
