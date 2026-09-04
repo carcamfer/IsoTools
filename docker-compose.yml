@@ -13,12 +13,40 @@ services:
       - DB_PASSWORD=industrial
       - DB_NAME=industrial_events
       - DATABASE_URL=postgresql://industrial:industrial@db:5432/industrial_events
+      # Las tools federadas de calidad corren fuera de este compose (repo ai-iso).
+      # `host.docker.internal` las alcanza desde dentro del contenedor; en Linux
+      # requiere el `extra_hosts` de abajo.
+      - TOOL_URL_MANAGE_PRODUCT_SPECS=http://host.docker.internal:8101
+      - TOOL_URL_MANAGE_DEVICE_REGISTRY=http://host.docker.internal:8102
+      - TOOL_URL_MANAGE_NONCONFORMANCES=http://host.docker.internal:8103
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       db:
         condition: service_healthy
     volumes:
+      # OJO: este bind mount tapa `web/dist` de la imagen con el del host. En
+      # desarrollo eso es lo que se quiere (recarga en caliente del backend); el
+      # dashboard se sirve aparte con `npm run web:dev`, que hace proxy a este
+      # contenedor. Para ver el SPA servido por el core, corre antes
+      # `npm run web:build` o levanta la imagen sin el mount.
       - .:/app
-    command: npm run dev
+      # Volumen anonimo que "tapa" justo esta subruta del bind mount de arriba, asi
+      # que /app/node_modules queda siendo el de la IMAGEN (instalado con pnpm
+      # DENTRO del contenedor) y no el del host.
+      #
+      # Es obligatorio con pnpm: su node_modules es una granja de symlinks que
+      # apuntan a rutas ABSOLUTAS del host (p. ej.
+      # /d/Projects/IsoTools-main/node_modules/.pnpm/express@.../...). Un bind mount
+      # copia el symlink tal cual, pero esa ruta no existe dentro del contenedor —
+      # cada paquete queda como un enlace roto y CUALQUIER `require`/`import` falla,
+      # no solo el de una devDependency.
+      - /app/node_modules
+    # `node --watch` en vez de nodemon: nodemon es devDependency, y con el volumen
+    # anonimo de arriba el contenedor solo trae las dependencias de produccion
+    # (ver Dockerfile). `--watch` es nativo de Node 22+, cubre el mismo caso de uso
+    # sin necesitar un paquete extra.
+    command: node --watch src/server.js
 
   # Gateway edge del ERP en modo simulado. Sirve para probar el conector central
   # (ERP -> Industrial Events) sin Firebird y sin Windows:

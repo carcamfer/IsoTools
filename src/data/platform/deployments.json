@@ -1,0 +1,89 @@
+{
+  "version": 1,
+  "description": "REGISTRO DE DESPLIEGUE. Dice DONDE vive cada tool y quien puede entrar. Es deliberadamente un archivo aparte de los 5 JSON de `src/data/agents/`: aquellos son el CONTRATO (que evento produce y consume cada tool) y cambian cuando cambia el dominio; este es OPERACION (subdominio, dueno, estado) y cambia cada vez que un equipo despliega. Mezclarlos obligaria a tocar el contrato para mover un servidor.",
+  "notes": [
+    "Una tool que NO aparece aqui sigue existiendo en el catalogo: el dashboard la muestra como `planned`, apagada y sin enlace. Nunca un enlace muerto.",
+    "`federated` = la tool corre en su propio servicio, en su propio subdominio, con su propio equipo. El core no la ejecuta: el bus la salta y ella consume por poll desde /events/subscriptions/:toolId.",
+    "`native` = la tool corre EN PROCESO dentro del core (src/tools/*.js). No tiene UI propia; el dashboard le muestra contrato y ultimos eventos.",
+    "Las URLs NO se escriben aqui porque cambian por entorno. Se derivan de `subdomain` + PLATFORM_DOMAIN, y se pueden pisar con TOOL_URL_<ID_EN_MAYUSCULAS> o, en local, con PLATFORM_LOCAL_TOOLS=true usando `localPort`."
+  ],
+  "defaults": {
+    "healthPath": "/health",
+    "readyPath": "/ready"
+  },
+  "rolesByCategory": {
+    "quality": ["quality.engineer", "quality.manager", "quality.technical-authority", "quality.director"],
+    "maintenance": ["maintenance.technician", "maintenance.manager"],
+    "production": ["operator", "operations.manager"],
+    "erp": ["operations.manager"],
+    "supply-chain": ["operations.manager"],
+    "energy": ["operations.manager"],
+    "safety": ["operator", "operations.manager"],
+    "control": ["operator", "operations.manager"],
+    "vision": ["quality.engineer", "operations.manager"],
+    "ai-ml": ["operations.manager"],
+    "digital-twin": ["operations.manager"],
+    "infrastructure": ["platform.admin"],
+    "cybersecurity": ["platform.admin"]
+  },
+  "tools": [
+    {
+      "toolId": "manage_product_specs",
+      "kind": "federated",
+      "status": "live",
+      "subdomain": "specs",
+      "localPort": 8101,
+      "owner": "Calidad (ai-iso)",
+      "repo": "ai-iso",
+      "isoClause": "7.5",
+      "requiredRoles": ["quality.engineer", "quality.manager", "quality.technical-authority", "quality.director"],
+      "summary": "Especificaciones de producto versionadas y aprobadas, con caracteristicas CTQ."
+    },
+    {
+      "toolId": "manage_device_registry",
+      "kind": "federated",
+      "status": "live",
+      "subdomain": "devices",
+      "localPort": 8102,
+      "owner": "Calidad (ai-iso)",
+      "repo": "ai-iso",
+      "isoClause": "7.1.5",
+      "requiredRoles": ["quality.engineer", "quality.manager", "maintenance.technician", "maintenance.manager"],
+      "summary": "Inventario de equipos de medicion, plan de calibracion y trazabilidad.",
+      "note": "Los roles van explicitos porque en tools.json esta catalogada en `infrastructure` (inventario de dispositivos edge) y el servicio real implementa el registro de equipos de MEDICION de ISO 7.1.5.2. Sin este override heredaria `platform.admin` y ningun ingeniero de calidad podria entrar. La discrepancia del catalogo esta pendiente de resolver con el equipo dueno."
+    },
+    {
+      "toolId": "manage_nonconformances",
+      "kind": "federated",
+      "status": "live",
+      "subdomain": "nc",
+      "localPort": 8103,
+      "owner": "Calidad (ai-iso)",
+      "repo": "ai-iso",
+      "isoClause": "8.7 / 10.2",
+      "requiredRoles": ["quality.engineer", "quality.manager", "quality.technical-authority", "quality.director"],
+      "summary": "Libro de no conformidades, disposiciones y accion correctiva."
+    },
+
+    { "toolId": "inspect_product_quality", "kind": "native", "status": "live", "isoClause": "8.6" },
+    { "toolId": "collect_quality_measurements", "kind": "native", "status": "live", "isoClause": "8.5.1" },
+    { "toolId": "calculate_control_charts", "kind": "native", "status": "live", "isoClause": "9.1.3" },
+    {
+      "toolId": "detect_out_of_control_signals",
+      "kind": "federated",
+      "status": "live",
+      "isoClause": "9.1.3",
+      "owner": "pendiente de asignar",
+      "note": "El handler nativo se retiró en a0c9e50 porque un servicio EXTERNO ya era dueño de esta tool y el bus producía OUT_OF_CONTROL_DETECTED por duplicado. Falta que su equipo declare aquí su `subdomain` y su `owner`; mientras tanto el dashboard la muestra como registrada sin desplegar, que es la verdad."
+    },
+    { "toolId": "generate_8d_report", "kind": "native", "status": "live", "isoClause": "10.2" },
+    { "toolId": "analyze_failure_modes", "kind": "native", "status": "live", "isoClause": "6.1" },
+    { "toolId": "calculate_cpk_ppk", "kind": "native", "status": "live", "isoClause": "9.1.3" },
+    { "toolId": "run_msa_analysis", "kind": "native", "status": "live", "isoClause": "7.1.5.2" },
+    { "toolId": "detect_business_anomalies", "kind": "native", "status": "live", "isoClause": "9.1.3" },
+    { "toolId": "compare_planned_vs_actual", "kind": "native", "status": "live", "isoClause": "9.1.1" },
+    { "toolId": "generate_kpis", "kind": "native", "status": "live", "isoClause": "9.1.1" },
+    { "toolId": "track_project_progress", "kind": "native", "status": "live", "isoClause": "6.2" },
+    { "toolId": "automate_followups", "kind": "native", "status": "live", "isoClause": "10.2" }
+  ]
+}

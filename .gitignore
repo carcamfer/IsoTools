@@ -3,6 +3,10 @@ node_modules/
 npm-debug.log*
 yarn-error.log*
 
+# Dashboard compilado: se genera en el build (Docker o `npm run web:build`).
+# El lockfile de web/ SI se versiona: es el que hace reproducible ese build.
+web/dist/
+
 # Entornos (nunca commitear API keys / credenciales)
 .env
 .env.*

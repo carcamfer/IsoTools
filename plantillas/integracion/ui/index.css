@@ -1,0 +1,106 @@
+/* =============================================================================
+ * COPIA ESTE ARCHIVO TAL CUAL a `src/index.css` de tu frontend.
+ * Es la definicion del tema "Control Room". No cambies los valores.
+ *
+ * Estos tokens son LOS MISMOS que usa el dashboard orquestador de IsoTools y las
+ * tres tools de calidad. No es una coincidencia ni una copia: es el contrato.
+ * El operador sale del dashboard, entra a tu subdominio y no debe notar que
+ * cambio de aplicacion. Un solo producto, varios despliegues.
+ *
+ * Requiere Tailwind v4:
+ *   pnpm add -D tailwindcss @tailwindcss/vite
+ *   // vite.config.ts:  plugins: [react(), tailwindcss()]
+ * Si estas en Tailwind v3, usa `tailwind-preset.cjs` de esta misma carpeta.
+ * ============================================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+@import 'tailwindcss';
+
+/* Industrial, plano, oscuro. Sin degradados, sin sombras, sin esquinas grandes.
+   La referencia visual es un tablero de control, no una landing page. */
+@theme {
+  /* --- Superficies. Tres niveles, y solo tres. -------------------------------
+     bg        el lienzo de la pagina
+     surface   paneles, tarjetas, barras (lo que "flota" sobre el lienzo)
+     surface2  hundidos: cabecera de tabla, hover, chips, inputs
+     Un cuarto nivel inventado rompe la jerarquia: si algo necesita destacar,
+     usa el borde o el color de estado, no un gris nuevo. */
+  --color-bg: #0e1216;
+  --color-surface: #161b21;
+  --color-surface2: #1e242b;
+  --color-border: #262d35;
+
+  /* --- Texto. Tres pesos de jerarquia. --------------------------------------
+     text    lo que se lee
+     muted   secundario: descripciones, celdas de apoyo
+     faint   terciario: etiquetas, marcas de tiempo, pistas */
+  --color-text: #e6e9ec;
+  --color-muted: #9aa4ae;
+  --color-faint: #6b7681;
+
+  /* --- Estado. Cada color SIGNIFICA algo; no se usan por gusto estetico. -----
+     brass   la marca / lo federado. Es el unico acento de identidad.
+     ok      conforme, en linea, aprobado
+     warn    atencion: vence pronto, requiere revision
+     danger  no conforme, caido, rechazado
+     info    informativo, en proceso (tambien el color primario de accion) */
+  --color-brass: #d6a23e;
+  --color-ok: #3fb36b;
+  --color-warn: #e0a93b;
+  --color-danger: #e5604d;
+  --color-info: #4c8fbf;
+
+  /* --- Tipografia -----------------------------------------------------------
+     Sans para prosa. Mono para TODO dato que un auditor pueda tener que
+     comparar caracter por caracter: ids, fechas, versiones, claves, cifras.
+     No es decoracion: en mono los digitos alinean y un `1` no se confunde. */
+  --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
+
+  /* Un escalon por debajo de `text-xs`. Es el tamaño de los metadatos, y hay
+     muchos: una pantalla de operacion es sobre todo metadato. */
+  --text-2xs: 0.6875rem;
+  --text-2xs--line-height: 1rem;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Barras de scroll acordes al tema. En un panel oscuro, la barra clara del
+   sistema es lo primero que delata que esto no es una aplicacion terminada. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-surface2) transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--color-surface2);
+  border-radius: 6px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Accesibilidad, no cortesia: para quien marca "reducir movimiento" en su
+   sistema, una animacion puede provocar mareo real. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,88 @@
+# .github/workflows/deploy-railway.yml
+# =============================================================================
+# PLANTILLA — UNA tool en el repo.
+#
+# Si tu repo tiene VARIAS tools, usa `deploy-railway-multi.yml` en su lugar.
+#
+# Qué tienes que hacer para que esto funcione:
+#   1. Crea el secreto `RAILWAY_TOKEN` en tu repo
+#      (Settings -> Secrets and variables -> Actions -> New repository secret)
+#      con el TOKEN DE PROYECTO que te dio el equipo de plataforma.
+#      OJO: token de PROYECTO, no de cuenta. Ver el README de esta carpeta.
+#   2. Ajusta `RAILWAY_SERVICE` abajo al nombre del servicio en tu proyecto Railway.
+#   3. Ajusta `HEALTH_URL` a tu subdominio (o bórralo si aún no tienes DNS).
+# =============================================================================
+name: Deploy a Railway
+
+on:
+  push:
+    branches: [main]
+  # Permite redesplegar a mano desde la pestaña Actions, sin hacer un commit vacío.
+  workflow_dispatch:
+
+# Dos merges seguidos no deben desplegar en paralelo y pisarse.
+# `cancel-in-progress: false` es deliberado: cancelar un deploy a la mitad deja el
+# servicio en un estado que nadie eligió.
+concurrency:
+  group: deploy-railway-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # Ata el job a un Environment de GitHub si quieres exigir aprobación manual
+    # antes de producción. Opcional, pero es gratis y evita despliegues accidentales.
+    # environment: production
+
+    env:
+      # ── EDITA ESTO ────────────────────────────────────────────────────────
+      RAILWAY_SERVICE: mi-tool
+      HEALTH_URL: https://mi-tool.<dominio>/health
+      # ──────────────────────────────────────────────────────────────────────
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v7
+
+      # Falla temprano y con un mensaje legible. Sin esto, un secreto faltante da un
+      # error del CLI que no dice nada útil y se pierden 20 minutos.
+      - name: Verificar que el token existe
+        run: |
+          if [ -z "$RAILWAY_TOKEN" ]; then
+            echo "::error::Falta el secreto RAILWAY_TOKEN en este repositorio."
+            echo "Settings -> Secrets and variables -> Actions -> New repository secret"
+            exit 1
+          fi
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Instalar el CLI de Railway
+        run: npm i -g @railway/cli
+
+      # `--ci` transmite los logs de BUILD y termina cuando el build acaba, así que
+      # el job se pone en rojo si el build falla. Sin esa bandera el CLI se queda
+      # escuchando logs de deploy y el job cuelga hasta el timeout.
+      #
+      # No uses `--detach`: devuelve de inmediato y el workflow sale verde aunque el
+      # build reviente, que es la peor señal posible.
+      - name: Desplegar
+        run: railway up --service "$RAILWAY_SERVICE" --ci
+
+      # `--ci` termina cuando acaba el BUILD, no cuando el servicio está sano. Un
+      # workflow verde no prueba que la tool responda: eso lo prueba esto.
+      - name: Esperar a que el servicio responda
+        if: ${{ env.HEALTH_URL != '' && !contains(env.HEALTH_URL, '<dominio>') }}
+        run: |
+          for i in $(seq 1 30); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "$HEALTH_URL" || echo 000)
+            if [ "$code" = "200" ]; then
+              echo "OK: $HEALTH_URL respondió 200 en el intento $i"
+              exit 0
+            fi
+            echo "intento $i/30: HTTP $code — reintentando en 10 s"
+            sleep 10
+          done
+          echo "::error::$HEALTH_URL no respondió 200 tras 5 minutos."
+          exit 1

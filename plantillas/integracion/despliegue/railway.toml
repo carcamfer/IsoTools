@@ -1,0 +1,40 @@
+# railway.toml — PLANTILLA
+# =============================================================================
+# Config as code de Railway. Va en la raíz de tu repo (o del paquete, si Railway
+# detectó tu monorepo y creó un servicio por paquete).
+#
+# Ventaja de tenerlo en el repo: la configuración de build y deploy se revisa en un
+# PR como cualquier otro código, en vez de vivir en el dashboard donde nadie ve
+# quién la cambió ni por qué.
+#
+# LÍMITE IMPORTANTE: `rootDirectory` y la ruta del archivo de config SOLO se pueden
+# fijar desde el dashboard de Railway, no desde aquí ni desde el CLI. Si tienes
+# varias tools en un repo, lee la sección "monorepo" del README de esta carpeta.
+# =============================================================================
+
+[build]
+builder = "dockerfile"
+# Si tu repo tiene UNA tool, con esto basta.
+# Si tiene VARIAS, borra esta línea y usa la variable de servicio
+# RAILWAY_DOCKERFILE_PATH en cada proyecto — ver el README.
+dockerfilePath = "Dockerfile"
+
+[deploy]
+# Railway inyecta PORT: tu servicio DEBE escuchar en process.env.PORT.
+# Un puerto fijo en el código funciona en local y falla al desplegar.
+startCommand = "node dist/service/mi-tool-server.js"
+
+# Railway no manda tráfico hasta que esto responde 200. Debe estar ABIERTO: el
+# probe no trae cookie de sesión ni API key.
+healthcheckPath = "/health"
+healthcheckTimeout = 30
+
+# Reinicia solo cuando el proceso falla. `always` esconde los crash loops:
+# el servicio se ve "arriba" mientras se reinicia cada 5 segundos.
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 5
+
+# Una sola réplica salvo que sepas que tu servicio es horizontalmente seguro.
+# El SSO de la plantilla sí lo es (sesión firmada, sin estado en memoria); tu
+# dominio puede no serlo.
+numReplicas = 1

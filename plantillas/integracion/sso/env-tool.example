@@ -1,0 +1,61 @@
+# =============================================================================
+# Variables de TU TOOL. Copia a `.env` y rellena.
+# `.env` NUNCA se commitea — agrega `.env*` a tu .gitignore (menos este ejemplo).
+# =============================================================================
+
+PORT=8101
+# Donde vive tu SPA compilado. Vacio = tu servicio sirve solo la API.
+UI_DIST_DIR=./ui/dist
+
+# -- Plataforma IsoTools (plano MAQUINA) --------------------------------------
+# Tu clave para publicar y consumir eventos en el core. Se queda DEL LADO DEL
+# SERVIDOR: jamas llega al navegador.
+ISOTOOLS_API_URL=https://isotools-production.up.railway.app/api/v1
+ISOTOOLS_API_KEY=
+
+# Clave con la que OTROS servicios (el bus, una saga, otra tool) te llaman a ti.
+# Es el plano maquina de TU superficie. Si no la pones, ese plano queda apagado.
+TOOL_API_KEY=
+
+# =============================================================================
+# SINGLE SIGN-ON (plano HUMANO)
+# =============================================================================
+# El SSO se activa por PRESENCIA de OIDC_ISSUER. Sin el, tu servicio corre ABIERTO
+# (desarrollo local). Con el puesto pero incompleto, el proceso NO arranca: auth a
+# medias es peor que auth ausente, porque parece protegida y no lo esta.
+#
+# Los tres primeros valores te los da el equipo de plataforma.
+
+OIDC_ISSUER=
+OIDC_CLIENT_ID=
+OIDC_CLIENT_SECRET=
+
+# Debe coincidir EXACTO con la URI permitida en el IdP. Cambia por entorno:
+#   produccion: https://nc.<dominio>/auth/callback
+#   local:      http://localhost:8103/auth/callback
+OIDC_REDIRECT_URI=https://<tu-subdominio>.<dominio>/auth/callback
+
+# A donde vuelve el usuario tras cerrar sesion. Normalmente el dashboard.
+OIDC_POST_LOGOUT_REDIRECT_URI=https://<dominio>/
+
+OIDC_SCOPES=openid profile email roles
+# Algunos proveedores publican los roles en `groups` en vez de `roles`.
+OIDC_ROLES_CLAIM=roles
+
+# Traduccion rol-de-plataforma -> rol-de-TU-dominio, el mas fuerte primero.
+# Vacio usa la tabla de `role-mapping.js`.
+#   ROLE_MAP=quality.director=QualityDirector,quality.engineer=QualityEngineer
+ROLE_MAP=
+
+# -- Sesion -------------------------------------------------------------------
+# Firma tu cookie de sesion. Minimo 32 caracteres:  openssl rand -hex 32
+# Cada tool usa el SUYO. No se comparte entre equipos: es lo que hace que
+# comprometer una tool no se pueda reproducir contra las demas.
+SESSION_SECRET=
+
+# Ponle el nombre de tu tool para que no choque con nada.
+SESSION_COOKIE_NAME=nc_session
+SESSION_TTL_SECONDS=28800
+
+# `true` quita el atributo Secure. SOLO para correr en local sobre HTTP plano.
+SESSION_INSECURE_COOKIES=false

@@ -1,8 +1,15 @@
 # IsoTools
 
-Repositorio **único y enfocado** para construir las *tools* de los agentes industriales orientadas a **procedimientos ISO**. Aquí está todo lo necesario para entender, crear, probar y coordinar tools — y **nada más**.
+Repositorio **único y enfocado** de la plataforma ISO. Tiene dos planos, y no se mezclan:
 
-> **Qué NO está aquí (a propósito):** el sitio web, los dashboards, las landings y las vistas Pug. Eso vive en el repo de la plataforma. En IsoTools solo hay el plano de *tools*: handlers, bus de eventos, validación, la API de ingesta, los JSON de configuración y la documentación para programarlas. Así nadie se distrae con código que no le toca.
+- **`src/` — el core de eventos.** Handlers de tools nativas, bus, validación, API de ingesta y consumo, catálogo publicado. Node + Express, sin build.
+- **`web/` — el dashboard orquestador.** La consola de operación: barra lateral con las 125 tools, salud en vivo de cada servicio, flujo de eventos, trazabilidad y reporte de auditoría ISO. React + TypeScript + Vite, con su propio `package.json` y su propio `node_modules`.
+
+Se comunican **solo por HTTP**. Nada de imports cruzados, nada de dependencias compartidas. Al desplegar, el core sirve el SPA compilado por el **mismo origen**, que es lo que hace que la cookie de sesión sea first-party y que CORS no participe en absoluto.
+
+> **Qué sigue sin estar aquí (a propósito):** el sitio web público, las landings y las vistas Pug. El dashboard es una **consola de operación**, no una página de marketing.
+
+**Cada tool de cada equipo se despliega en su propio subdominio** y es un relying party OIDC independiente. El dashboard **no es un gateway de autenticación**: es un relying party más, así que una caída suya no impide a nadie entrar a su tool. El contrato completo entre equipos está en **[`docs/PLATAFORMA-SSO.md`](./docs/PLATAFORMA-SSO.md)**.
 
 ---
 
@@ -14,6 +21,8 @@ Repositorio **único y enfocado** para construir las *tools* de los agentes indu
 - **Quieres ver qué hace cada tool y con quién habla** → abre el **[cerebro Obsidian](./cerebro/)** (`cerebro/index.md`). Cómo usarlo y coordinarte con la otra tool: **[`pasos/10-cerebro-y-colaboracion.md`](./pasos/10-cerebro-y-colaboracion.md)**.
 - **Vas a levantar y probar el ambiente** → **[`docs/SIMULACION_PASO_A_PASO.md`](./docs/SIMULACION_PASO_A_PASO.md)**.
 - **Necesitas datos del ERP / PLC en tu tool** → **NO te conectes al ERP**. La plataforma central tiene los conectores: leen el sistema externo, lo traducen al estándar ORCA y lo publican en Industrial Events; el Communication Router te lo entrega. Todo el detalle en **[`docs/ERP_CENTRAL.md`](./docs/ERP_CENTRAL.md)**.
+- **Vas a poner login (SSO) y despliegue automático en tu tool** → **[`plantillas/integracion/`](./plantillas/integracion/)**. Código para copiar a tu repo: el módulo OIDC, el Dockerfile que empaqueta tu backend y tu frontend en una imagen, y el workflow de GitHub Actions que despliega a Railway. Lee antes el contrato: **[`docs/PLATAFORMA-SSO.md`](./docs/PLATAFORMA-SSO.md)**.
+- **Tu tool va a tener pantalla** → **[`plantillas/integracion/ui/`](./plantillas/integracion/ui/)**. El tema Control Room —colores, tipografía, espaciado, estructura y componentes— es obligatorio: las cinco tools tienen que verse como una sola aplicación.
 
 ---
 
@@ -23,25 +32,42 @@ Repositorio **único y enfocado** para construir las *tools* de los agentes indu
 IsoTools/
 ├── README.md                  ← este archivo
 ├── pasos/                     ← roadmap del programador (1 → 9)
-├── plantillas/                ← esqueletos descargables (handler, meta, regla, placeholder…)
+├── plantillas/                ← lo que copias a TU repo
+│   ├── integracion/sso/       ← módulo OIDC listo para copiar (+ guía para otros stacks)
+│   ├── integracion/docker/    ← Dockerfile: backend Node + frontend React en una imagen
+│   ├── integracion/despliegue/ ← GitHub Actions → Railway (1 tool y varias tools)
+│   ├── integracion/ui/        ← tema Control Room: tokens, AppShell y componentes
+│   └── *.js · *.json          ← esqueletos de tool (handler, meta, regla, placeholder…)
 ├── recursos/                  ← diagramas y material de apoyo
 ├── docs/
 │   ├── GUIA_TOOLS.md          ← referencia técnica para crear una tool
+│   ├── PLATAFORMA-SSO.md      ← contrato de SSO entre equipos (léelo antes de autenticar)
+│   ├── DASHBOARD.md           ← cómo funciona el frontend y cómo sumar una tool
 │   ├── SIMULACION_PASO_A_PASO.md
 │   └── postman/               ← colección Postman lista para importar
 ├── cerebro/                   ← 🧠 segundo cerebro Obsidian (tools + comunicaciones)
-├── src/
-│   ├── server.js              ← API de eventos: publicar/consumir (SOLO tools, sin web)
+│
+├── src/                       ← BACKEND (Node ESM, sin build)
+│   ├── server.js              ← monta las 3 superficies + el SPA, por un solo origen
 │   ├── config.js              ← configuración central (env vars)
+│   ├── auth/                  ← relying party OIDC: sesión firmada, roles, handshake
 │   ├── tools/                 ← un archivo por tool + index.js (registro)
-│   ├── data/agents/           ← los 5 JSON de configuración del sistema
-│   ├── services/              ← eventBus · eventsService · validationService · catalogService · cache
-│   ├── controllers/           ← eventsController · catalogController
-│   ├── routes/                ← eventsRoutes · catalogRoutes
+│   ├── data/
+│   │   ├── agents/            ← los 5 JSON de CONTRATO (cambian con el dominio)
+│   │   ├── platform/          ← roles.json · deployments.json (cambian al desplegar)
+│   │   └── connectors/        ← un JSON por sistema externo conectado (ERP, PLC, MES)
 │   ├── connectors/            ← conectores ERP/PLC → Industrial Events (ver docs/ERP_CENTRAL.md)
-│   ├── data/connectors/       ← un JSON por sistema externo conectado
-│   ├── middleware/            ← apiKeyAuth · rateLimit
+│   ├── services/              ← eventBus · eventsService · catalogService · deploymentService · healthProbe · cache
+│   ├── controllers/           ← eventsController · catalogController · consoleController · connectorsController
+│   ├── routes/                ← eventsRoutes · catalogRoutes · consoleRoutes · authRoutes · connectorRoutes
+│   ├── middleware/            ← apiKeyAuth · rateLimit · spa
 │   └── db/                    ← conexión, migración y capacidades de Postgres
+│
+├── web/                       ← FRONTEND (React + TS + Vite; node_modules propio)
+│   ├── src/api/               ← cliente HTTP y tipos del contrato con el core
+│   ├── src/components/        ← Sidebar + primitivas visuales
+│   ├── src/pages/             ← Resumen · Herramientas · Eventos · Catálogo · Auditoría
+│   └── dist/                  ← salida del build (la sirve el core; no se versiona)
 ├── scripts/
 │   ├── createApiKey.js · seedEvents.js · simulateStream.js · test_package_iso.js
 │   ├── generar-cerebro.js     ← genera/actualiza las notas del cerebro

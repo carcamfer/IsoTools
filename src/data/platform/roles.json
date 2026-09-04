@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "description": "Vocabulario de roles de la plataforma. Es el UNICO acuerdo entre equipos que hay que cerrar antes de programar contra el: renombrar un rol despues obliga a redesplegar todas las tools a la vez. El IdP publica estos identificadores en el claim `roles`; cada tool los traduce a su propio vocabulario de dominio.",
+  "notes": [
+    "El orden es la jerarquia: un usuario con varios roles se resuelve al primero que coincida (el mas fuerte). Es lo que se muestra como rol principal.",
+    "`seesAllTools` solo concede VISIBILIDAD en el dashboard: poder abrir el mosaico de una tool. NO concede autoridad de dominio. Si un administrador de plataforma puede aprobar una especificacion lo decide la politica de esa tool a partir de los roles reales del usuario, nunca el dashboard.",
+    "Un rol del IdP que no este en esta lista se descarta: un rol desconocido jamas debe convertirse en una concesion por accidente."
+  ],
+  "roles": [
+    {
+      "id": "platform.admin",
+      "label": "Administrador de plataforma",
+      "description": "Opera el core: catalogo, claves de API, despliegues y salud de las tools.",
+      "seesAllTools": true
+    },
+    {
+      "id": "platform.auditor",
+      "label": "Auditor",
+      "description": "Lectura transversal de evidencia: cadena causal de eventos y reporte de auditoria ISO. No ejecuta acciones.",
+      "seesAllTools": true
+    },
+    {
+      "id": "quality.director",
+      "label": "Director de Calidad",
+      "description": "Autoridad maxima de calidad. En las tools de calidad aprueba especificaciones y autoriza cualquier disposicion, incluida UseAsIs (ISO 8.7.1)."
+    },
+    {
+      "id": "quality.technical-authority",
+      "label": "Autoridad Tecnica",
+      "description": "Aprueba especificaciones de producto (ISO 7.5.2)."
+    },
+    {
+      "id": "quality.manager",
+      "label": "Gerente de Calidad",
+      "description": "Aprueba especificaciones y autoriza Scrap, ReturnToSupplier, Rework y Regrade."
+    },
+    {
+      "id": "quality.engineer",
+      "label": "Ingeniero de Calidad",
+      "description": "Captura mediciones y no conformidades; autoriza Rework y Regrade."
+    },
+    {
+      "id": "maintenance.manager",
+      "label": "Gerente de Mantenimiento",
+      "description": "Aprueba planes preventivos y ordenes de trabajo."
+    },
+    {
+      "id": "maintenance.technician",
+      "label": "Tecnico de Mantenimiento",
+      "description": "Ejecuta ordenes de trabajo y registra condicion de activos."
+    },
+    {
+      "id": "operations.manager",
+      "label": "Gerente de Operaciones",
+      "description": "Produccion, ERP, cadena de suministro y energia: lectura y decisiones de planta."
+    },
+    {
+      "id": "operator",
+      "label": "Operador",
+      "description": "Rol base de piso: consulta y captura en las tools que se lo permitan."
+    }
+  ]
+}
