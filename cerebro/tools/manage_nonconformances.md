@@ -38,3 +38,4 @@ Registra, clasifica, asigna y da seguimiento a no conformidades internas y de cl
 <!-- Anota aquí cada cambio de contrato/lógica que pueda afectar a otras tools.
      Formato sugerido:  - [YYYY-MM-DD] (tu-nombre) qué cambió y a quién afecta -->
 - [2026-06-28] (auto) nota inicial generada desde la configuración.
+- [2026-09-30] (Carlos+Claude) consume tambien `ERP_CUSTOMER_RETURN_REGISTERED`: una devolucion de cliente del ERP abre una NC de tipo `customer`, una por partida devuelta. Solo se agrego el tipo a `consumes`; no cambio su contrato de salida.

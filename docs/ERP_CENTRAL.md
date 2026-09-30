@@ -99,6 +99,9 @@ Recursos que expone (todos `GET`, todos protegidos con `X-API-Key` si defines
 | `/api/ventas` | `DOCTO_VE_ID` | `limit`, `fecha`, `desde_id` |
 | `/api/compras` | `DOCTO_CM_ID` | `limit`, `fecha`, `desde_id` |
 | `/api/articulos` | `ARTICULO_ID` | `limit`, `desde_id` |
+| `/api/ventas/cierre` | — | `dias` (devuelve **una** fila) |
+| `/api/ventas/devoluciones` | `DOCTO_VE_ID` | `limit`, `desde_id` (una fila por **partida**) |
+| `/api/pedidos/sin-surtir` | — | `limit` |
 
 Variables (se definen en la máquina del ERP, nunca en el código):
 
@@ -438,13 +441,53 @@ CENTRAL_API_KEY=<api key con scope events:write>
 | `ERP_SALES_ORDER_REGISTERED` | Documento de venta nuevo | `orderId`, `folio`, `date`, `documentType`, `amount`, `status` |
 | `ERP_PURCHASE_ORDER_REGISTERED` | Documento de compra nuevo (pull deshabilitado por defecto) | `orderId`, `folio`, `date`, `amount`, `status` |
 
-`ERP_DATA_SYNCED` ya está enrutado por `rule-erp-001` hacia `get_inventory_status`.
-Para enrutar los demás, **crea la regla en su rama** `comm/<source>__<target>` y
-documenta la nota en `cerebro/comunicaciones/` (ver `CLAUDE.md`). Candidatas
-naturales:
+Y los **cuatro eventos con destinatario real**, que son los que mueven tools
+desplegadas hoy (las demás entradas de `tools.json` que suenan a ERP están en
+estado `planned`: no tienen handler ni despliegue):
 
-- `erp_connector → get_inventory_status` con `ERP_STOCK_BELOW_MINIMUM`
-- `erp_connector → forecast_revenue` con `ERP_SALES_ORDER_REGISTERED`
+| Evento | Cuándo | Destino y regla |
+|---|---|---|
+| `ERP_SALES_PERIOD_CLOSED` | Cierre del periodo anterior, 1 por periodo | `compare_planned_vs_actual` · `rule-conn-001` |
+| `ERP_CUSTOMER_RETURN_REGISTERED` | Devolución de cliente, **una por partida** | `manage_nonconformances` · `rule-conn-002` |
+| `ERP_ITEM_CREATED` | Alta en el catálogo de artículos | `manage_product_specs` · `rule-conn-003` |
+| `ERP_SALES_ORDER_UNFULFILLABLE` | Pedido vigente con existencia ≤ 0 | `automate_followups` · `rule-conn-004` |
+
+El `data` de cada uno está armado para satisfacer el `inputSchema.required` de
+su destinatario — eso, y no otra cosa, es lo que hace que a una Tool «le sirva»
+un evento. Los tres `enum` que decidieron el diseño:
+
+- `compare_planned_vs_actual.module` no tenía `sales`; **se agregó al contrato**.
+- `automate_followups.targetType` solo admite `lead|supplier|order`, así que el
+  seguimiento se le da al **pedido** comprometido, no al SKU agotado.
+- `manage_nonconformances.severity` usa `minor|major|critical`, que **no** es la
+  escala de `event.severity` del IES. Son dos campos con dos escalas.
+
+**El cierre va en su propio conector** (`erp-microsip-cierre.json`, cada hora)
+porque `intervalMs` es por conector y no por pull. Cada hora en lugar de cada 24
+a propósito: la clave de negocio es el periodo, así que el primer ciclo después
+de medianoche publica y los 23 siguientes salen como duplicados. Eso lo hace
+auto-reparable — un redeploy no se salta un día.
+
+**Sin presupuesto.** Microsip no lleva presupuesto de ventas en el módulo de
+Ventas, y la meta se decidió como dato de **gobernanza**: vive en `METAS` de
+`src/tools/compare_planned_vs_actual.js`, versionada en git, donde el historial
+dice quién la cambió y cuándo. El ERP aporta el real. Sin meta el handler
+publica `status: "sin_meta"` y `deviationPercent: null` en lugar de inventar un
+0 %.
+
+**Las letras de `TIPO_DOCTO` no están verificadas.** `F`/`D`/`P` son la
+convención habitual de Microsip, no un valor comprobado contra `AGTE.FDB`. Están
+en variables de entorno del gateway (`ERP_TIPO_FACTURA`, `ERP_TIPO_DEVOLUCION`,
+`ERP_TIPO_PEDIDO`, `ERP_ESTATUS_VIGENTE`) para que un cambio de letra no obligue
+a tocar código. Confírmalas antes de confiar en los pulls que dependen de ellas:
+
+```sql
+SELECT TIPO_DOCTO, ESTATUS, COUNT(*), MIN(FECHA), MAX(FECHA), SUM(IMPORTE_NETO)
+FROM DOCTOS_VE GROUP BY 1, 2 ORDER BY 3 DESC;
+```
+
+Si `'D'` no aparece, las devoluciones probablemente se manejan como notas de
+crédito y el pull `devoluciones` cambia de tabla.
 
 ### Cómo lo consume una Tool
 

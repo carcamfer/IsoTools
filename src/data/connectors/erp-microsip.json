@@ -165,6 +165,133 @@
           }
         }
       ]
+    },
+    {
+      "id": "devoluciones",
+      "path": "/api/ventas/devoluciones",
+      "query": {
+        "limit": 100
+      },
+      "cursor": {
+        "param": "desde_id",
+        "field": "DOCTO_VE_ID",
+        "type": "number"
+      },
+      "fields": {
+        "doctoId": "DOCTO_VE_ID",
+        "folio": "FOLIO",
+        "fecha": "FECHA",
+        "articuloId": "ARTICULO_ID",
+        "skuId": "CLAVE",
+        "nombre": "ARTICULO",
+        "unidades": "UNIDADES",
+        "importe": "IMPORTE_NETO"
+      },
+      "emits": [
+        {
+          "mode": "rows",
+          "key": "$raw.DEVOLUCION_KEY",
+          "event": {
+            "type": "ERP_CUSTOMER_RETURN_REGISTERED",
+            "category": "quality",
+            "severity": "medium"
+          },
+          "data": {
+            "action": "create",
+            "ncType": "customer",
+            "severity": "major",
+            "affectedPartId": "$row.skuId",
+            "description": "Devolucion de cliente registrada en el ERP",
+            "articuloId": "$row.articuloId",
+            "nombre": "$row.nombre",
+            "unidades": "$row.unidades",
+            "orderId": "$row.doctoId",
+            "folio": "$row.folio",
+            "fecha": "$row.fecha",
+            "amount": "$row.importe",
+            "erpType": "$params.erpType"
+          }
+        }
+      ]
+    },
+    {
+      "id": "articulos",
+      "path": "/api/articulos",
+      "query": {
+        "limit": 200
+      },
+      "cursor": {
+        "param": "desde_id",
+        "field": "ARTICULO_ID",
+        "type": "number"
+      },
+      "fields": {
+        "articuloId": "ARTICULO_ID",
+        "skuId": "CLAVE",
+        "nombre": "NOMBRE"
+      },
+      "emits": [
+        {
+          "mode": "rows",
+          "when": "$row.skuId != null",
+          "key": "$row.articuloId",
+          "event": {
+            "type": "ERP_ITEM_CREATED",
+            "category": "configuration",
+            "severity": "low"
+          },
+          "data": {
+            "partId": "$row.skuId",
+            "action": "create",
+            "characteristics": [],
+            "articuloId": "$row.articuloId",
+            "nombre": "$row.nombre",
+            "erpType": "$params.erpType"
+          }
+        }
+      ]
+    },
+    {
+      "id": "pedidos_sin_surtir",
+      "path": "/api/pedidos/sin-surtir",
+      "query": {
+        "limit": 100
+      },
+      "fields": {
+        "doctoId": "DOCTO_VE_ID",
+        "folio": "FOLIO",
+        "fecha": "FECHA",
+        "articuloId": "ARTICULO_ID",
+        "skuId": "CLAVE",
+        "nombre": "ARTICULO",
+        "unidadesPedidas": "UNIDADES_PEDIDAS",
+        "quantity": "EXISTENCIA"
+      },
+      "emits": [
+        {
+          "mode": "rows",
+          "key": "$raw.PEDIDO_KEY",
+          "event": {
+            "type": "ERP_SALES_ORDER_UNFULFILLABLE",
+            "category": "productivity",
+            "severity": "high"
+          },
+          "data": {
+            "targetType": "order",
+            "targetIds": [
+              "$row.folio"
+            ],
+            "orderId": "$row.doctoId",
+            "skuId": "$row.skuId",
+            "articuloId": "$row.articuloId",
+            "nombre": "$row.nombre",
+            "unidadesComprometidas": "$row.unidadesPedidas",
+            "existencia": "$row.quantity",
+            "warehouseId": "$params.warehouseId",
+            "erpType": "$params.erpType"
+          }
+        }
+      ]
     }
   ]
 }

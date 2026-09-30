@@ -38,4 +38,5 @@ Genera y envía seguimientos automáticos a leads, proveedores y órdenes pendie
 <!-- Anota aquí cada cambio de contrato/lógica que pueda afectar a otras tools.
      Formato sugerido:  - [YYYY-MM-DD] (tu-nombre) qué cambió y a quién afecta -->
 - [2026-06-28] (auto) nota inicial generada desde la configuración.
+- [2026-09-30] (Carlos+Claude) consume tambien `ERP_SALES_ORDER_UNFULFILLABLE`: pedido comprometido sin existencia. `targetType: "order"` porque el enum no admite `sku`.
 - [2026-07-27] (Carlos) Sale del bus nativo: se eliminó `src/tools/automate_followups.js` y las reglas `rule-pkg-003`, `rule-pkg-012`, `rule-erp-009`. La tool la implementa ahora un **servicio EXTERNO** que consume por `GET /api/v1/events` y publica `FOLLOWUP_SCHEDULED` por `POST /api/v1/events`. Sigue en `tools.json`, así que el externo puede usar `GET /api/v1/events/subscriptions/automate_followups?since_seq=N`. **No volver a registrar un handler nativo:** se agendaría el mismo seguimiento dos veces.

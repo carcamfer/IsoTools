@@ -37,3 +37,20 @@ Registro cronológico de cambios significativos en el vault. Una línea por even
 - ⚠️ **Riesgo asumido y comunicado:** la plataforma ya no genera `DEFECT_FOUND` por su cuenta. Si el servicio externo deja de publicarlo, **se apagan las NCs de inspección**. No hay red de seguridad nativa.
 - ⚠️ **Contrato para el externo:** el `data` de `DEFECT_FOUND` debe incluir `defectFound: true`; esa condición la evalúa el bus sobre el payload publicado (`rule-pkg-001`).
 - Con esto son 3 las tools con dueño externo: `detect_out_of_control_signals`, `automate_followups` e `inspect_product_quality`. Todas siguen en `tools.json` para poder usar `/events/subscriptions/:toolId`.
+
+## [2026-09-30] El ERP entra al bus: 4 eventos de inventario y ventas
+- Se conectó el ERP Microsip (inventario + ventas) al Communication Router con **4 eventos nuevos**, elegidos hacia atrás desde el `inputSchema` de las tools reales, no desde las tablas del ERP.
+- Reglas nuevas: `rule-conn-001..004`. Bitácoras: [[comunicaciones/sync_erp_data_local__compare_planned_vs_actual]], [[comunicaciones/sync_erp_data_local__manage_nonconformances]], [[comunicaciones/sync_erp_data_local__manage_product_specs]], [[comunicaciones/sync_erp_data_local__automate_followups]].
+
+| Evento | Origen en el ERP | Destino |
+|---|---|---|
+| `ERP_SALES_PERIOD_CLOSED` | cierre del periodo en `DOCTOS_VE` | `compare_planned_vs_actual` |
+| `ERP_CUSTOMER_RETURN_REGISTERED` | devoluciones, una fila por partida | `manage_nonconformances` |
+| `ERP_ITEM_CREATED` | altas en `ARTICULOS` | `manage_product_specs` |
+| `ERP_SALES_ORDER_UNFULFILLABLE` | pedidos vigentes × existencia ≤ 0 | `automate_followups` |
+
+- **Descartadas por contrato**, aunque parecían candidatas: `manage_device_registry` (los instrumentos están en activos fijos, no en inventario ni ventas) y `generate_8d_report` (solo toma un `ncId`; recibe datos del ERP por la cadena de la NC, no como suscriptor).
+- **Tres enum decidieron el diseño**, no la opinión: `compare_planned_vs_actual.module` no tenía `sales` (se agregó); `automate_followups.targetType` no admite `sku`, así que el seguimiento se le da al **pedido** comprometido y no al artículo; `manage_nonconformances.severity` usa `minor|major|critical`, que **no** es la escala del IES.
+- **Sin presupuesto.** Microsip no lleva presupuesto de ventas y se decidió que la meta es gobernanza, no operación: vive en `METAS` de `src/tools/compare_planned_vs_actual.js`, versionada en git. El handler dejó de inventar una desviación: sin meta publica `status: "sin_meta"` y `deviationPercent: null`.
+- **Pendiente de verificar contra la base real:** las letras de `TIPO_DOCTO` (`F`/`D`/`P`) y la existencia de `DOCTOS_VE_DET`. Se sacaron a variables de entorno (`ERP_TIPO_FACTURA`, `ERP_TIPO_DEVOLUCION`, `ERP_TIPO_PEDIDO`, `ERP_ESTATUS_VIGENTE`) para que un cambio de letra no obligue a tocar código ni a redesplegar el gateway.
+- ⚠️ `npm run validate` reporta 2 errores **previos** a este cambio: `deployments.json` marca `inspect_product_quality` y `automate_followups` como `native`, pero ambas salieron del bus nativo el 2026-07-27. Mientras no se corrija, `rule-conn-004` guarda el evento pero el router no ejecuta nada.

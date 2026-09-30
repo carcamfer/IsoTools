@@ -857,6 +857,46 @@
         "topic": "POST /api/mgmt/progress",
         "triggerCondition": "always",
         "description": "KPIs generados actualizan el avance del proyecto de implementación ISO"
-  }
+  },
+    {
+      "id": "rule-conn-001",
+      "sourceToolId": "sync_erp_data_local",
+      "targetToolId": "compare_planned_vs_actual",
+      "event": "ERP_SALES_PERIOD_CLOSED",
+      "protocol": "REST",
+      "topic": "POST /api/mgmt/plan-vs-real",
+      "triggerCondition": "always",
+      "description": "Cierre de ventas del periodo desde el ERP alimenta la comparacion plan vs real"
+    },
+    {
+      "id": "rule-conn-002",
+      "sourceToolId": "sync_erp_data_local",
+      "targetToolId": "manage_nonconformances",
+      "event": "ERP_CUSTOMER_RETURN_REGISTERED",
+      "protocol": "REST",
+      "topic": "POST /api/quality/nc",
+      "triggerCondition": "always",
+      "description": "Devolucion de cliente registrada en el ERP levanta una no conformidad de origen cliente"
+    },
+    {
+      "id": "rule-conn-003",
+      "sourceToolId": "sync_erp_data_local",
+      "targetToolId": "manage_product_specs",
+      "event": "ERP_ITEM_CREATED",
+      "protocol": "REST",
+      "topic": "POST /api/quality/specs",
+      "triggerCondition": "always",
+      "description": "Articulo nuevo en el catalogo del ERP siembra la parte en el registro de especificaciones"
+    },
+    {
+      "id": "rule-conn-004",
+      "sourceToolId": "sync_erp_data_local",
+      "targetToolId": "automate_followups",
+      "event": "ERP_SALES_ORDER_UNFULFILLABLE",
+      "protocol": "REST",
+      "topic": "POST /api/mgmt/followups",
+      "triggerCondition": "always",
+      "description": "Pedido comprometido sin existencia dispara seguimiento comercial"
+    }
   ]
 }

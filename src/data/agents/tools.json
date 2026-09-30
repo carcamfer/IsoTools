@@ -448,7 +448,8 @@
           "enum": [
             "production",
             "purchasing",
-            "costs"
+            "costs",
+            "sales"
           ]
         },
         "periodStart": {
@@ -509,7 +510,9 @@
     "produces": [
       "PRODUCTION_VARIANCE_DETECTED"
     ],
-    "consumes": []
+    "consumes": [
+      "ERP_SALES_PERIOD_CLOSED"
+    ]
   },
   {
     "id": "detect_production_deviation",
@@ -1261,7 +1264,8 @@
     "consumes": [
       "SALES_PREDICTED",
       "8D_REPORT_ISSUED",
-      "PROJECT_AT_RISK"
+      "PROJECT_AT_RISK",
+      "ERP_SALES_ORDER_UNFULFILLABLE"
     ]
   },
   {
@@ -5882,7 +5886,8 @@
     "consumes": [
       "OUT_OF_CONTROL_DETECTED",
       "DEFECT_FOUND",
-      "FMEA_CRITICAL_FOUND"
+      "FMEA_CRITICAL_FOUND",
+      "ERP_CUSTOMER_RETURN_REGISTERED"
     ]
   },
   {
@@ -6132,7 +6137,8 @@
       "PRODUCT_SPEC_UPDATED"
     ],
     "consumes": [
-      "CAPABILITY_BELOW_TARGET"
+      "CAPABILITY_BELOW_TARGET",
+      "ERP_ITEM_CREATED"
     ]
   },
   {

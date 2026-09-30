@@ -1,0 +1,80 @@
+{
+  "id": "erp_microsip_cierre",
+  "name": "ERP Microsip — cierre de ventas (horario)",
+  "description": "Corte del periodo de ventas ya terminado. Va en su propio conector porque `intervalMs` es por conector, no por pull: el resto de los pulls del ERP necesitan 60s y este no. Corre cada hora en lugar de cada 24h a proposito: la clave de negocio es el periodo, asi que el primer ciclo despues de medianoche publica el cierre del dia anterior y los 23 siguientes salen como duplicados. Eso lo hace auto-reparable — un redeploy no se salta un dia.",
+  "enabled": true,
+  "intervalMs": 3600000,
+  "module": {
+    "id": "erp_connector",
+    "version": "1.0.0"
+  },
+  "source": {
+    "type": "http",
+    "baseUrlEnv": "ERP_GATEWAY_URL",
+    "apiKeyEnv": "ERP_GATEWAY_KEY",
+    "apiKeyHeader": "X-API-Key",
+    "timeoutMs": 15000,
+    "headers": {
+      "CF-Access-Client-Id": "$env.CF_ACCESS_CLIENT_ID",
+      "CF-Access-Client-Secret": "$env.CF_ACCESS_CLIENT_SECRET"
+    }
+  },
+  "asset": {
+    "asset_id": "erp-microsip-01",
+    "asset_type": "erp",
+    "plant_id": "plant_01",
+    "area_id": "administration",
+    "location": "servidor-erp"
+  },
+  "params": {
+    "erpType": "microsip",
+    "plantId": "plant_01",
+    "module": "sales",
+    "unit": "MXN"
+  },
+  "metadata": {
+    "notes": "origen: conector central ORCA · ERP Microsip · cierre de periodo"
+  },
+  "pulls": [
+    {
+      "id": "cierre_ventas",
+      "path": "/api/ventas/cierre",
+      "query": {
+        "dias": 1
+      },
+      "fields": {
+        "periodoKey": "PERIODO_KEY",
+        "fechaInicio": "FECHA_INICIO",
+        "fechaFin": "FECHA_FIN",
+        "documentos": "DOCUMENTOS",
+        "facturado": "FACTURADO",
+        "unidades": "UNIDADES",
+        "devuelto": "DEVUELTO"
+      },
+      "emits": [
+        {
+          "mode": "rows",
+          "key": "$raw.PERIODO_KEY",
+          "event": {
+            "type": "ERP_SALES_PERIOD_CLOSED",
+            "category": "productivity",
+            "severity": "low"
+          },
+          "data": {
+            "module": "$params.module",
+            "periodStart": "$row.fechaInicio",
+            "periodEnd": "$row.fechaFin",
+            "period": "$row.periodoKey",
+            "plantId": "$params.plantId",
+            "actual": "$row.facturado",
+            "unit": "$params.unit",
+            "documentos": "$row.documentos",
+            "unidades": "$row.unidades",
+            "devuelto": "$row.devuelto",
+            "erpType": "$params.erpType"
+          }
+        }
+      ]
+    }
+  ]
+}
