@@ -6,7 +6,7 @@ categoria: quality
 agente: calidad-spc
 estado: implementada
 consume: [OUT_OF_CONTROL_DETECTED, DEFECT_FOUND, FMEA_CRITICAL_FOUND]
-produce: [NC_REQUIRES_8D]
+produce: [NC_CREATED, NC_REQUIRES_8D]
 programador:
 actualizado: 2026-06-28
 tags: [tool, quality, implementada]
@@ -18,7 +18,7 @@ tags: [tool, quality, implementada]
 Registra, clasifica, asigna y da seguimiento a no conformidades internas y de cliente con flujo de aprobación.
 ## Contrato de eventos
 - **Consume:** `OUT_OF_CONTROL_DETECTED`, `DEFECT_FOUND`, `FMEA_CRITICAL_FOUND`
-- **Produce:** `NC_REQUIRES_8D`
+- **Produce:** `NC_CREATED`, `NC_REQUIRES_8D`
 ## Notas de implementación (tools-dev-spec)
 **Por qué estos inputs:** Se necesita `action` para determinar si se crea un registro nuevo, se actualiza el estado/datos de uno existente, se cierra o se consulta la lista. `ncType` clasifica el origen: 'internal' es una falla detectada antes de despachar, 'customer' es una reclamación post-entrega, 'supplier' es material no conforme recibido, 'audit' surge de una auditoría del SGC. `severity` (minor/major/critical) determina el tiempo máximo de respuesta y si se requiere CAPA inmediata. `affectedPartId` vincula la NC al componente específico para análisis de recurrencia y cálculo de scrap.
 
@@ -39,3 +39,4 @@ Registra, clasifica, asigna y da seguimiento a no conformidades internas y de cl
      Formato sugerido:  - [YYYY-MM-DD] (tu-nombre) qué cambió y a quién afecta -->
 - [2026-06-28] (auto) nota inicial generada desde la configuración.
 - [2026-09-30] (Carlos+Claude) consume tambien `ERP_CUSTOMER_RETURN_REGISTERED`: una devolucion de cliente del ERP abre una NC de tipo `customer`, una por partida devuelta. Solo se agrego el tipo a `consumes`; no cambio su contrato de salida.
+- [2026-10-01] (Carlos+Claude) produce tambien `NC_CREATED`, una por CADA no conformidad abierta sin importar su severidad. Es la evidencia de ISO 9001 8.7 que ya buscaba el reporte de auditoria; `NC_REQUIRES_8D` se queda solo para `major`/`critical`. Ninguna tool lo consume todavia, asi que no hay regla nueva. **El servicio federado (repo `ai-iso`) debe empezar a publicarlo**; el handler nativo de respaldo ya lo emite.

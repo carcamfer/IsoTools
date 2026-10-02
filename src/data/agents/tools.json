@@ -5881,6 +5881,7 @@
     },
     "isoEvent": "nonconformance_registered",
     "produces": [
+      "NC_CREATED",
       "NC_REQUIRES_8D"
     ],
     "consumes": [
