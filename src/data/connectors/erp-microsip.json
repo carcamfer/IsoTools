@@ -16,7 +16,8 @@
     "timeoutMs": 15000,
     "headers": {
       "CF-Access-Client-Id": "$env.CF_ACCESS_CLIENT_ID",
-      "CF-Access-Client-Secret": "$env.CF_ACCESS_CLIENT_SECRET"
+      "CF-Access-Client-Secret": "$env.CF_ACCESS_CLIENT_SECRET",
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     }
   },
   "asset": {
