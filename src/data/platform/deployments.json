@@ -4,7 +4,8 @@
   "notes": [
     "Una tool que NO aparece aqui sigue existiendo en el catalogo: el dashboard la muestra como `planned`, apagada y sin enlace. Nunca un enlace muerto.",
     "`federated` = la tool corre en su propio servicio, en su propio subdominio, con su propio equipo. El core no la ejecuta: el bus la salta y ella consume por poll desde /events/subscriptions/:toolId.",
-    "`native` = la tool corre EN PROCESO dentro del core (src/tools/*.js). No tiene UI propia; el dashboard le muestra contrato y ultimos eventos.",
+    "TODAS las tools de este registro son `federated`: cada equipo es dueno de su servicio. `native` ya no se usa aqui. Los handlers que quedan en src/tools/ NO son la tool: son el fallback que mantiene viva la cadena mientras el servicio real no existe, y la referencia del contrato para quien lo implemente.",
+    "El fallback se activa solo: una tool `federated` SIN `subdomain` (o sin dominio configurado, como en local) no tiene URL resoluble, y entonces el bus ejecuta su handler de src/tools/. Declarar el `subdomain` es lo que hace que el router delegue. No hay bandera que nadie tenga que acordarse de cambiar.",
     "Las URLs NO se escriben aqui porque cambian por entorno. Se derivan de `subdomain` + PLATFORM_DOMAIN, y se pueden pisar con TOOL_URL_<ID_EN_MAYUSCULAS> o, en local, con PLATFORM_LOCAL_TOOLS=true usando `localPort`."
   ],
   "defaults": {
@@ -12,19 +13,53 @@
     "readyPath": "/ready"
   },
   "rolesByCategory": {
-    "quality": ["quality.engineer", "quality.manager", "quality.technical-authority", "quality.director"],
-    "maintenance": ["maintenance.technician", "maintenance.manager"],
-    "production": ["operator", "operations.manager"],
-    "erp": ["operations.manager"],
-    "supply-chain": ["operations.manager"],
-    "energy": ["operations.manager"],
-    "safety": ["operator", "operations.manager"],
-    "control": ["operator", "operations.manager"],
-    "vision": ["quality.engineer", "operations.manager"],
-    "ai-ml": ["operations.manager"],
-    "digital-twin": ["operations.manager"],
-    "infrastructure": ["platform.admin"],
-    "cybersecurity": ["platform.admin"]
+    "quality": [
+      "quality.engineer",
+      "quality.manager",
+      "quality.technical-authority",
+      "quality.director"
+    ],
+    "maintenance": [
+      "maintenance.technician",
+      "maintenance.manager"
+    ],
+    "production": [
+      "operator",
+      "operations.manager"
+    ],
+    "erp": [
+      "operations.manager"
+    ],
+    "supply-chain": [
+      "operations.manager"
+    ],
+    "energy": [
+      "operations.manager"
+    ],
+    "safety": [
+      "operator",
+      "operations.manager"
+    ],
+    "control": [
+      "operator",
+      "operations.manager"
+    ],
+    "vision": [
+      "quality.engineer",
+      "operations.manager"
+    ],
+    "ai-ml": [
+      "operations.manager"
+    ],
+    "digital-twin": [
+      "operations.manager"
+    ],
+    "infrastructure": [
+      "platform.admin"
+    ],
+    "cybersecurity": [
+      "platform.admin"
+    ]
   },
   "tools": [
     {
@@ -36,7 +71,12 @@
       "owner": "Calidad (ai-iso)",
       "repo": "ai-iso",
       "isoClause": "7.5",
-      "requiredRoles": ["quality.engineer", "quality.manager", "quality.technical-authority", "quality.director"],
+      "requiredRoles": [
+        "quality.engineer",
+        "quality.manager",
+        "quality.technical-authority",
+        "quality.director"
+      ],
       "summary": "Especificaciones de producto versionadas y aprobadas, con caracteristicas CTQ."
     },
     {
@@ -48,7 +88,12 @@
       "owner": "Calidad (ai-iso)",
       "repo": "ai-iso",
       "isoClause": "7.1.5",
-      "requiredRoles": ["quality.engineer", "quality.manager", "maintenance.technician", "maintenance.manager"],
+      "requiredRoles": [
+        "quality.engineer",
+        "quality.manager",
+        "maintenance.technician",
+        "maintenance.manager"
+      ],
       "summary": "Inventario de equipos de medicion, plan de calibracion y trazabilidad.",
       "note": "Los roles van explicitos porque en tools.json esta catalogada en `infrastructure` (inventario de dispositivos edge) y el servicio real implementa el registro de equipos de MEDICION de ISO 7.1.5.2. Sin este override heredaria `platform.admin` y ningun ingeniero de calidad podria entrar. La discrepancia del catalogo esta pendiente de resolver con el equipo dueno."
     },
@@ -61,10 +106,14 @@
       "owner": "Calidad (ai-iso)",
       "repo": "ai-iso",
       "isoClause": "8.7 / 10.2",
-      "requiredRoles": ["quality.engineer", "quality.manager", "quality.technical-authority", "quality.director"],
+      "requiredRoles": [
+        "quality.engineer",
+        "quality.manager",
+        "quality.technical-authority",
+        "quality.director"
+      ],
       "summary": "Libro de no conformidades, disposiciones y accion correctiva."
     },
-
     {
       "toolId": "inspect_product_quality",
       "kind": "federated",
@@ -77,24 +126,94 @@
       "summary": "Inspeccion visual de producto: clasifica la pieza y publica DEFECT_FOUND.",
       "note": "Decia `native` desde que el handler se retiro el 2026-07-27 (ver cerebro/log.md): el servicio externo ya era dueno de la tool y el bus abria la NC por duplicado. Quedo en `native` sin registro en src/tools/index.js, lo que hacia fallar `npm run validate` y con ello el job `verificar` del despliegue. Los roles se heredan de la categoria `vision`. El nombre del EQUIPO sigue pendiente: aqui solo consta el repo."
     },
-    { "toolId": "collect_quality_measurements", "kind": "native", "status": "live", "isoClause": "8.5.1" },
-    { "toolId": "calculate_control_charts", "kind": "native", "status": "live", "isoClause": "9.1.3" },
+    {
+      "toolId": "collect_quality_measurements",
+      "kind": "federated",
+      "status": "pending",
+      "owner": "pendiente de asignar",
+      "isoClause": "8.5.1",
+      "note": "Federada por contrato: su equipo sera dueno del servicio. Todavia no declara `subdomain`, asi que la URL no se resuelve y el bus cae de vuelta al handler de src/tools/ (el fallback documentado en CLAUDE.md): la cadena ISO sigue viva sin desplegar nada. Ese handler queda como REFERENCIA del contrato para quien implemente el servicio. En cuanto el equipo declare aqui su `subdomain`, el router delega en el y deja de ejecutarlo."
+    },
+    {
+      "toolId": "calculate_control_charts",
+      "kind": "federated",
+      "status": "pending",
+      "owner": "pendiente de asignar",
+      "isoClause": "9.1.3",
+      "note": "Federada por contrato: su equipo sera dueno del servicio. Todavia no declara `subdomain`, asi que la URL no se resuelve y el bus cae de vuelta al handler de src/tools/ (el fallback documentado en CLAUDE.md): la cadena ISO sigue viva sin desplegar nada. Ese handler queda como REFERENCIA del contrato para quien implemente el servicio. En cuanto el equipo declare aqui su `subdomain`, el router delega en el y deja de ejecutarlo."
+    },
     {
       "toolId": "detect_out_of_control_signals",
       "kind": "federated",
-      "status": "live",
-      "isoClause": "9.1.3",
+      "status": "pending",
       "owner": "pendiente de asignar",
+      "isoClause": "9.1.3",
       "note": "El handler nativo se retiró en a0c9e50 porque un servicio EXTERNO ya era dueño de esta tool y el bus producía OUT_OF_CONTROL_DETECTED por duplicado. Falta que su equipo declare aquí su `subdomain` y su `owner`; mientras tanto el dashboard la muestra como registrada sin desplegar, que es la verdad."
     },
-    { "toolId": "generate_8d_report", "kind": "native", "status": "live", "isoClause": "10.2" },
-    { "toolId": "analyze_failure_modes", "kind": "native", "status": "live", "isoClause": "6.1" },
-    { "toolId": "calculate_cpk_ppk", "kind": "native", "status": "live", "isoClause": "9.1.3" },
-    { "toolId": "run_msa_analysis", "kind": "native", "status": "live", "isoClause": "7.1.5.2" },
-    { "toolId": "detect_business_anomalies", "kind": "native", "status": "live", "isoClause": "9.1.3" },
-    { "toolId": "compare_planned_vs_actual", "kind": "native", "status": "live", "isoClause": "9.1.1" },
-    { "toolId": "generate_kpis", "kind": "native", "status": "live", "isoClause": "9.1.1" },
-    { "toolId": "track_project_progress", "kind": "native", "status": "live", "isoClause": "6.2" },
+    {
+      "toolId": "generate_8d_report",
+      "kind": "federated",
+      "status": "pending",
+      "owner": "pendiente de asignar",
+      "isoClause": "10.2",
+      "note": "Federada por contrato: su equipo sera dueno del servicio. Todavia no declara `subdomain`, asi que la URL no se resuelve y el bus cae de vuelta al handler de src/tools/ (el fallback documentado en CLAUDE.md): la cadena ISO sigue viva sin desplegar nada. Ese handler queda como REFERENCIA del contrato para quien implemente el servicio. En cuanto el equipo declare aqui su `subdomain`, el router delega en el y deja de ejecutarlo."
+    },
+    {
+      "toolId": "analyze_failure_modes",
+      "kind": "federated",
+      "status": "pending",
+      "owner": "pendiente de asignar",
+      "isoClause": "6.1",
+      "note": "Federada por contrato: su equipo sera dueno del servicio. Todavia no declara `subdomain`, asi que la URL no se resuelve y el bus cae de vuelta al handler de src/tools/ (el fallback documentado en CLAUDE.md): la cadena ISO sigue viva sin desplegar nada. Ese handler queda como REFERENCIA del contrato para quien implemente el servicio. En cuanto el equipo declare aqui su `subdomain`, el router delega en el y deja de ejecutarlo."
+    },
+    {
+      "toolId": "calculate_cpk_ppk",
+      "kind": "federated",
+      "status": "pending",
+      "owner": "pendiente de asignar",
+      "isoClause": "9.1.3",
+      "note": "Federada por contrato: su equipo sera dueno del servicio. Todavia no declara `subdomain`, asi que la URL no se resuelve y el bus cae de vuelta al handler de src/tools/ (el fallback documentado en CLAUDE.md): la cadena ISO sigue viva sin desplegar nada. Ese handler queda como REFERENCIA del contrato para quien implemente el servicio. En cuanto el equipo declare aqui su `subdomain`, el router delega en el y deja de ejecutarlo."
+    },
+    {
+      "toolId": "run_msa_analysis",
+      "kind": "federated",
+      "status": "pending",
+      "owner": "pendiente de asignar",
+      "isoClause": "7.1.5.2",
+      "note": "Federada por contrato: su equipo sera dueno del servicio. Todavia no declara `subdomain`, asi que la URL no se resuelve y el bus cae de vuelta al handler de src/tools/ (el fallback documentado en CLAUDE.md): la cadena ISO sigue viva sin desplegar nada. Ese handler queda como REFERENCIA del contrato para quien implemente el servicio. En cuanto el equipo declare aqui su `subdomain`, el router delega en el y deja de ejecutarlo."
+    },
+    {
+      "toolId": "detect_business_anomalies",
+      "kind": "federated",
+      "status": "pending",
+      "owner": "pendiente de asignar",
+      "isoClause": "9.1.3",
+      "note": "Federada por contrato: su equipo sera dueno del servicio. Todavia no declara `subdomain`, asi que la URL no se resuelve y el bus cae de vuelta al handler de src/tools/ (el fallback documentado en CLAUDE.md): la cadena ISO sigue viva sin desplegar nada. Ese handler queda como REFERENCIA del contrato para quien implemente el servicio. En cuanto el equipo declare aqui su `subdomain`, el router delega en el y deja de ejecutarlo."
+    },
+    {
+      "toolId": "compare_planned_vs_actual",
+      "kind": "federated",
+      "status": "pending",
+      "owner": "pendiente de asignar",
+      "isoClause": "9.1.1",
+      "note": "Federada por contrato: su equipo sera dueno del servicio. Todavia no declara `subdomain`, asi que la URL no se resuelve y el bus cae de vuelta al handler de src/tools/ (el fallback documentado en CLAUDE.md): la cadena ISO sigue viva sin desplegar nada. Ese handler queda como REFERENCIA del contrato para quien implemente el servicio. En cuanto el equipo declare aqui su `subdomain`, el router delega en el y deja de ejecutarlo."
+    },
+    {
+      "toolId": "generate_kpis",
+      "kind": "federated",
+      "status": "pending",
+      "owner": "pendiente de asignar",
+      "isoClause": "9.1.1",
+      "note": "Federada por contrato: su equipo sera dueno del servicio. Todavia no declara `subdomain`, asi que la URL no se resuelve y el bus cae de vuelta al handler de src/tools/ (el fallback documentado en CLAUDE.md): la cadena ISO sigue viva sin desplegar nada. Ese handler queda como REFERENCIA del contrato para quien implemente el servicio. En cuanto el equipo declare aqui su `subdomain`, el router delega en el y deja de ejecutarlo."
+    },
+    {
+      "toolId": "track_project_progress",
+      "kind": "federated",
+      "status": "pending",
+      "owner": "pendiente de asignar",
+      "isoClause": "6.2",
+      "note": "Federada por contrato: su equipo sera dueno del servicio. Todavia no declara `subdomain`, asi que la URL no se resuelve y el bus cae de vuelta al handler de src/tools/ (el fallback documentado en CLAUDE.md): la cadena ISO sigue viva sin desplegar nada. Ese handler queda como REFERENCIA del contrato para quien implemente el servicio. En cuanto el equipo declare aqui su `subdomain`, el router delega en el y deja de ejecutarlo."
+    },
     {
       "toolId": "automate_followups",
       "kind": "federated",
