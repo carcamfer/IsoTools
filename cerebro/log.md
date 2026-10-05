@@ -70,3 +70,13 @@ Registro cronológico de cambios significativos en el vault. Una línea por even
 - `status` quedó en `pending` para las que no tienen servicio y `live` para las cinco que sí. Antes `detect_out_of_control_signals` decía `live` sin tener subdominio, lo cual era falso.
 - ⚠️ **Único hueco real:** `detect_out_of_control_signals` no tiene subdominio **ni** handler de respaldo (se retiró el 2026-07-21). Su regla `rule-qual-002`/`CHART_POINTS_UPDATED` no ejecuta nada y el bus la ignora en silencio. O su equipo declara el `subdomain`, o la cadena de SPC se queda cortada ahí.
 - `npm run validate`: OK con 11 avisos — uno por cada tool que aún no declara subdominio. Son avisos a propósito: el archivo describe un estado de transición y lo dice.
+
+## [2026-10-04] `cpa` y `rdp`: dos subdominios más, y la cadena de SPC se destraba
+- `compare_planned_vs_actual` → `cpa.orcalabs.mx` (`status: pending`) y `detect_out_of_control_signals` → `rdp.orcalabs.mx` (`status: live`). Con eso delegan 7 de 16.
+- **`rdp` cierra el hueco real.** Estaba federada sin subdominio **y** sin handler de respaldo desde el 2026-07-21 (se retiró porque el placeholder del core disparaba `OUT_OF_CONTROL_DETECTED` por duplicado → NC y 8D dobles). Su regla no ejecutaba nada y el bus la ignoraba en silencio: la cadena de SPC se cortaba ahí. Declarar el subdominio es el arreglo correcto del duplicado — el dueño del comportamiento es el servicio, no el core.
+- ⚠️ **`cpa` tiene un riesgo asumido.** La delegación se decide por **URL resoluble, no por que el servicio responda**. En producción el bus ya no ejecuta `src/tools/compare_planned_vs_actual.js`, así que si `cpa.orcalabs.mx` no publica `PRODUCTION_VARIANCE_DETECTED`, se queda muda toda la cascada de dirección: `generate_kpis`, `detect_business_anomalies` y `track_project_progress` dejan de recibir. El `ERP_SALES_PERIOD_CLOSED` sigue entrando al log y a su suscripción — no se pierde nada —, pero nadie reacciona.
+  - Por eso quedó en `status: pending`: la ruta está lista, el servicio no.
+  - **Vuelta atrás en una línea:** quitar el `subdomain` de esa entrada y el fallback se reactiva solo.
+  - En local no aplica: sin `PLATFORM_DOMAIN` la URL no resuelve y el handler sigue corriendo.
+- El handler de `compare_planned_vs_actual` pasa a ser referencia del contrato, incluida la constante `METAS`: el ERP aporta el real, **la meta la pone el servicio**.
+- Falta el nombre del equipo dueño de las dos. Avisos de `validate`: de 11 a 9.

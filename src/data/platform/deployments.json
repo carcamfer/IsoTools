@@ -145,10 +145,13 @@
     {
       "toolId": "detect_out_of_control_signals",
       "kind": "federated",
-      "status": "pending",
+      "status": "live",
+      "subdomain": "rdp",
+      "localPort": 8107,
       "owner": "pendiente de asignar",
       "isoClause": "9.1.3",
-      "note": "El handler nativo se retiró en a0c9e50 porque un servicio EXTERNO ya era dueño de esta tool y el bus producía OUT_OF_CONTROL_DETECTED por duplicado. Falta que su equipo declare aquí su `subdomain` y su `owner`; mientras tanto el dashboard la muestra como registrada sin desplegar, que es la verdad."
+      "summary": "Aplica las reglas de deteccion sobre los puntos de la carta y publica OUT_OF_CONTROL_DETECTED.",
+      "note": "El handler nativo se retiro en a0c9e50 porque el servicio EXTERNO ya era dueno de la tool y el placeholder del core disparaba OUT_OF_CONTROL_DETECTED por duplicado (NC y 8D dobles). Hasta ahora estaba federada SIN subdominio y SIN handler de respaldo, asi que su regla no ejecutaba nada y el bus la ignoraba en silencio: la cadena de SPC se cortaba aqui. Con `rdp` declarado el router por fin delega en su servicio, que es el arreglo correcto del duplicado. Falta el nombre del equipo dueno."
     },
     {
       "toolId": "generate_8d_report",
@@ -194,9 +197,12 @@
       "toolId": "compare_planned_vs_actual",
       "kind": "federated",
       "status": "pending",
+      "subdomain": "cpa",
+      "localPort": 8106,
       "owner": "pendiente de asignar",
       "isoClause": "9.1.1",
-      "note": "Federada por contrato: su equipo sera dueno del servicio. Todavia no declara `subdomain`, asi que la URL no se resuelve y el bus cae de vuelta al handler de src/tools/ (el fallback documentado en CLAUDE.md): la cadena ISO sigue viva sin desplegar nada. Ese handler queda como REFERENCIA del contrato para quien implemente el servicio. En cuanto el equipo declare aqui su `subdomain`, el router delega en el y deja de ejecutarlo."
+      "summary": "Compara el plan contra lo ejecutado por periodo y publica la varianza.",
+      "note": "Subdominio declarado: con la URL resoluble el router DELEGA y deja de ejecutar src/tools/compare_planned_vs_actual.js. OJO: la delegacion se decide por URL resoluble, no por que el servicio responda — si cpa.orcalabs.mx no publica PRODUCTION_VARIANCE_DETECTED, se queda muda toda la cascada de direccion (generate_kpis, detect_business_anomalies, track_project_progress). Por eso `status: pending` hasta que el servicio este arriba. El handler de src/tools/ queda como referencia del contrato, incluida la constante METAS: el ERP aporta el real, la meta la pone el servicio. Para volver al fallback basta quitar este `subdomain`."
     },
     {
       "toolId": "generate_kpis",
