@@ -87,3 +87,11 @@ Registro cronológico de cambios significativos en el vault. Una línea por even
 - Dos cosas observadas al sondear, ninguna rompe nada hoy:
   - El `/health` de `cpa` se identifica como `"service":"isotools-tool"`, el valor genérico de la plantilla. El de `rdp` sí dice `"tool":"detect_out_of_control_signals"`. Conviene que cada servicio se nombre: cuando haya 16 subdominios, un `/health` genérico no dice a quién sondeaste.
   - `cpa` **no implementa `/ready`**: devuelve 200 con el HTML del SPA, o sea que el catch-all se lo come. Un 200 ahí no significa nada. Hoy es inofensivo porque `deploymentService.js:107` solo construye `healthUrl` y `readyPath` de `defaults` no se usa en ningún lado — pero es el mismo patrón que nos mordió con el gateway de la planta (404 con la página de Flask).
+
+## [2026-10-04] Corrección: `rdp` no restableció el enrutamiento de SPC
+- Al revisar el grafo de reglas para contar qué tools tocan el ERP salió que **`detect_out_of_control_signals` no tiene ninguna regla de entrada**. `rule-qual-002` (`CHART_POINTS_UPDATED` → la tool) se borró el 2026-07-21 junto con el handler, y nunca se repuso.
+- Lo que se dijo en `acd87a7` —que declarar `rdp` destrababa la cadena de SPC— **es inexacto**: el subdominio hace que el router *delegue* cuando haya una regla, pero no crea la regla. Sin regla el bus no le entrega nada.
+- La tool **sí recibe**, por el otro camino: su `consumes` en `tools.json` sigue declarando `CHART_POINTS_UPDATED`, y `/events/subscriptions/:toolId` se guía por `consumes`, no por las reglas. Funciona por poll.
+- Lo que de verdad falta es la **trazabilidad**: sin la regla, `/events/chain/:correlationId` no muestra la arista `calculate_control_charts → detect_out_of_control_signals`. La cadena causal del log de evidencia tiene un salto, y eso es justo lo que una auditoría mira.
+- **Y ahora restaurarla es seguro.** Se borró porque el placeholder del core duplicaba `OUT_OF_CONTROL_DETECTED`. Hoy la tool es `federated` con subdominio, así que `isHandledExternally()` da `true` y el bus **delegaría en lugar de ejecutar**: no hay duplicado posible. La federación resolvió bien el problema que el borrado de la regla parchó.
+- Decisión pendiente: reponer `rule-qual-002` en su rama `comm/calculate_control_charts__detect_out_of_control_signals` (la nota ya existe).
