@@ -80,3 +80,10 @@ Registro cronológico de cambios significativos en el vault. Una línea por even
   - En local no aplica: sin `PLATFORM_DOMAIN` la URL no resuelve y el handler sigue corriendo.
 - El handler de `compare_planned_vs_actual` pasa a ser referencia del contrato, incluida la constante `METAS`: el ERP aporta el real, **la meta la pone el servicio**.
 - Falta el nombre del equipo dueño de las dos. Avisos de `validate`: de 11 a 9.
+
+## [2026-10-04] `cpa` confirmado en línea: las 7 federadas con subdominio están `live`
+- `GET https://cpa.orcalabs.mx/health` → `200 {"status":"ok","service":"isotools-tool"}` y `GET https://rdp.orcalabs.mx/health` → `200 {"status":"ok","tool":"detect_out_of_control_signals"}`. `compare_planned_vs_actual` pasa a `status: live`; el riesgo de cascada muda que se anotó antes **no aplica**: el servicio existe.
+- Queda el modo de falla, que no es lo mismo: **el fallback no es un failover.** La delegación se decide por URL resoluble, no por que el servicio responda. Si `cpa` se cae, `ERP_SALES_PERIOD_CLOSED` sigue entrando al log y a su suscripción —no se pierde nada, lo lee al volver desde su cursor— pero mientras esté caída la cascada de dirección se queda muda.
+- Dos cosas observadas al sondear, ninguna rompe nada hoy:
+  - El `/health` de `cpa` se identifica como `"service":"isotools-tool"`, el valor genérico de la plantilla. El de `rdp` sí dice `"tool":"detect_out_of_control_signals"`. Conviene que cada servicio se nombre: cuando haya 16 subdominios, un `/health` genérico no dice a quién sondeaste.
+  - `cpa` **no implementa `/ready`**: devuelve 200 con el HTML del SPA, o sea que el catch-all se lo come. Un 200 ahí no significa nada. Hoy es inofensivo porque `deploymentService.js:107` solo construye `healthUrl` y `readyPath` de `defaults` no se usa en ningún lado — pero es el mismo patrón que nos mordió con el gateway de la planta (404 con la página de Flask).

@@ -196,13 +196,13 @@
     {
       "toolId": "compare_planned_vs_actual",
       "kind": "federated",
-      "status": "pending",
+      "status": "live",
       "subdomain": "cpa",
       "localPort": 8106,
       "owner": "pendiente de asignar",
       "isoClause": "9.1.1",
       "summary": "Compara el plan contra lo ejecutado por periodo y publica la varianza.",
-      "note": "Subdominio declarado: con la URL resoluble el router DELEGA y deja de ejecutar src/tools/compare_planned_vs_actual.js. OJO: la delegacion se decide por URL resoluble, no por que el servicio responda — si cpa.orcalabs.mx no publica PRODUCTION_VARIANCE_DETECTED, se queda muda toda la cascada de direccion (generate_kpis, detect_business_anomalies, track_project_progress). Por eso `status: pending` hasta que el servicio este arriba. El handler de src/tools/ queda como referencia del contrato, incluida la constante METAS: el ERP aporta el real, la meta la pone el servicio. Para volver al fallback basta quitar este `subdomain`."
+      "note": "Servicio en Railway, verificado con GET https://cpa.orcalabs.mx/health -> 200. El router DELEGA y ya no ejecuta src/tools/compare_planned_vs_actual.js, que queda como referencia del contrato: el ERP aporta el real (campo `actual` de ERP_SALES_PERIOD_CLOSED) y la META la pone el servicio — la constante METAS del handler es solo el ejemplo. OJO con el modo de falla: la delegacion se decide por URL resoluble, NO por que el servicio responda, asi que el fallback no es un failover. Si cpa se cae, ERP_SALES_PERIOD_CLOSED sigue entrando al log y a su suscripcion (no se pierde nada, lo lee al volver desde su cursor) pero la cascada de direccion se queda muda mientras tanto: generate_kpis, detect_business_anomalies y track_project_progress dejan de recibir."
     },
     {
       "toolId": "generate_kpis",
