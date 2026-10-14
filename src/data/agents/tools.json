@@ -4761,7 +4761,9 @@
     "produces": [
       "FMEA_CRITICAL_FOUND"
     ],
-    "consumes": []
+    "consumes": [
+      "CONDITION_DEGRADED"
+    ]
   },
   {
     "id": "manage_spare_parts",
