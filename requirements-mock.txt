@@ -1,0 +1,2 @@
+# Solo para el modo simulado del gateway (ERP_MOCK=1): sin driver de Firebird.
+flask==3.0.3

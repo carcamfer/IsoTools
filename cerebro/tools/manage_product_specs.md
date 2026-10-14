@@ -36,3 +36,4 @@ Administra el árbol de características críticas (CTQ), tolerancias, límites 
 <!-- Anota aquí cada cambio de contrato/lógica que pueda afectar a otras tools.
      Formato sugerido:  - [YYYY-MM-DD] (tu-nombre) qué cambió y a quién afecta -->
 - [2026-06-28] (auto) nota inicial generada desde la configuración.
+- [2026-09-30] (Carlos+Claude) consume tambien `ERP_ITEM_CREATED`: un articulo nuevo del ERP siembra la parte con `characteristics: []`. Las tolerancias las sigue poniendo calidad — el ERP no las tiene.

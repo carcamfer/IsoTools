@@ -1,0 +1,4 @@
+# ORCA · ERP Edge Gateway (app.py)
+# Se instala en la maquina donde vive el ERP (Microsip/Firebird), no en la nube.
+flask==3.0.3
+firebirdsql==1.2.5

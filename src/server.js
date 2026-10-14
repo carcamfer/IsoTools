@@ -15,6 +15,9 @@
 //                      dependiendo de endpoints de pantalla.
 //   /api/v1/catalog/*  PUBLICO        — el contrato es dato publicado, sin key,
 //                      para que cualquier tool se descubra sin clonar el core.
+//   /api/v1/connectors/* plano MAQUINA — `x-api-key`. Estado y control del plano de
+//                      conectores (ERP/PLC -> Industrial Events). No sirve datos
+//                      del ERP: sirve el estado de la ingesta.
 //
 //   /auth/*            handshake OIDC del dashboard (navegaciones, no API).
 //   /                  el SPA compilado, con fallback de history.
@@ -31,8 +34,10 @@ import eventsRouter from './routes/eventsRoutes.js';
 import catalogRouter from './routes/catalogRoutes.js';
 import consoleRouter from './routes/consoleRoutes.js';
 import authRouter from './routes/authRoutes.js';
+import connectorsRouter from './routes/connectorRoutes.js';
 import { attachSession, authMode } from './auth/index.js';
 import { createSpaRouter } from './middleware/spa.js';
+import { startConnectors, stopConnectors } from './connectors/runtime.js';
 
 const app = express();
 
@@ -70,6 +75,10 @@ app.use('/api/v1/events', eventsRouter);
 app.use('/api/v1/catalog', catalogRouter);
 app.use('/api/v1/console', consoleRouter);
 
+// Plano de conectores: ERP/PLC -> conector -> Industrial Events -> router -> tools.
+// Las tools no se conectan al ERP; esto es solo el control de esa ingesta.
+app.use('/api/v1/connectors', connectorsRouter);
+
 // Cualquier cosa bajo /api que no exista es un 404 JSON. Va antes del SPA para que
 // un endpoint mal escrito no reciba el HTML del shell con un 200.
 app.use('/api', (req, res) => {
@@ -104,6 +113,14 @@ const server = await new Promise((resolve) => {
       if (authMode === 'open') {
         console.warn('[auth] OIDC_ISSUER sin configurar: la consola corre ABIERTA (modo desarrollo)');
       }
+      // Conectores: los arrancamos DESPUES de escuchar para no retrasar el
+      // healthcheck de Railway. Si fallan, la API sigue en pie.
+      if (config.connectors.enabled) {
+        startConnectors().catch((err) =>
+          console.error('[connectors] no se pudieron arrancar (no fatal):', err.message));
+      } else {
+        console.log('[connectors] deshabilitados (CONNECTORS_ENABLED=false)');
+      }
       resolve(s);
     });
   });
@@ -117,6 +134,7 @@ async function shutdown (signal) {
   if (shuttingDown) return;
   shuttingDown = true;
   console.log(`[shutdown] ${signal} recibido; drenando...`);
+  stopConnectors(); // deja de sondear el ERP antes de cerrar el pool
   const forced = setTimeout(() => {
     console.error('[shutdown] tiempo agotado; salida forzada');
     process.exit(1);

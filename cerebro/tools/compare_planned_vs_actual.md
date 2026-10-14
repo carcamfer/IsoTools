@@ -37,3 +37,4 @@ Compara métricas planificadas contra ejecución real en producción, compras y 
 <!-- Anota aquí cada cambio de contrato/lógica que pueda afectar a otras tools.
      Formato sugerido:  - [YYYY-MM-DD] (tu-nombre) qué cambió y a quién afecta -->
 - [2026-06-28] (auto) nota inicial generada desde la configuración.
+- [2026-09-30] (Carlos+Claude) ahora consume `ERP_SALES_PERIOD_CLOSED` (era la unica tool real con `consumes` vacio). Se agrego `sales` al enum de `module` y el handler dejo de devolver la desviacion fija de 12.5 %: calcula con `actual` del ERP y la meta de `METAS`. Sin meta publica `status: "sin_meta"`. Afecta a [[generate_kpis]] y [[detect_business_anomalies]], que leen su `data`.

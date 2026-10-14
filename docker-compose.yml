@@ -48,6 +48,24 @@ services:
     # sin necesitar un paquete extra.
     command: node --watch src/server.js
 
+  # Gateway edge del ERP en modo simulado. Sirve para probar el conector central
+  # (ERP -> Industrial Events) sin Firebird y sin Windows:
+  #   docker compose --profile erp up -d erp-gateway
+  erp-gateway:
+    profiles: ["erp"]
+    image: python:3.12-slim
+    container_name: orca-erp-gateway
+    working_dir: /app
+    command: sh -c "pip install --quiet -r requirements-mock.txt && python app.py"
+    environment:
+      - ERP_MOCK=1
+      - ERP_API_KEY=demo-key
+      - ERP_GATEWAY_PORT=5000
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/app
+
   db:
     profiles: ["api", "seed"]
     image: postgres:16
@@ -58,7 +76,7 @@ services:
       - POSTGRES_PASSWORD=industrial
       - POSTGRES_DB=industrial_events
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql

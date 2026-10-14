@@ -20,12 +20,41 @@ Ejemplo real (escenario "mediciones"):
 
 ```
 ┌─ [raíz] collect_quality_measurements  →  MEASUREMENTS_CAPTURED
-├─ calculate_control_charts        →  CHART_POINTS_UPDATED      [rule-qual-001]
-├─ detect_out_of_control_signals   →  OUT_OF_CONTROL_DETECTED   [rule-qual-002]
+└─ calculate_control_charts        →  CHART_POINTS_UPDATED      [rule-qual-001]
+     ⋮
+     ⋮  (aquí la cadena nativa TERMINA: detect_out_of_control_signals ya no
+     ⋮   corre en el bus. Un servicio EXTERNO consume CHART_POINTS_UPDATED y
+     ⋮   publica OUT_OF_CONTROL_DETECTED con POST /api/v1/events)
+     ▼
+┌─ [raíz] OUT_OF_CONTROL_DETECTED  (lo publica el servicio externo)
 ├─ manage_nonconformances          →  NC_REQUIRES_8D            [rule-qual-003]
-├─ generate_8d_report              →  8D_REPORT_ISSUED          [rule-qual-004]
-└─ automate_followups              →  FOLLOWUP_SCHEDULED        [rule-pkg-003]
+└─ generate_8d_report              →  8D_REPORT_ISSUED          [rule-qual-004]
+     ⋮
+     ⋮  (y aquí igual: automate_followups tampoco corre en el bus. El servicio
+     ⋮   externo de seguimientos consume 8D_REPORT_ISSUED / PROJECT_AT_RISK y
+     ⋮   publica FOLLOWUP_SCHEDULED, que es terminal: nadie reacciona a él)
 ```
+
+Escenario "defecto de visión" (el mismo patrón: la raíz la publica el externo):
+
+```
+     ⋮  (inspect_product_quality tampoco corre en el bus. El servicio externo
+     ⋮   consume FRAME_CAPTURED y publica DEFECT_FOUND con POST /api/v1/events)
+     ▼
+┌─ [raíz] DEFECT_FOUND  (lo publica el servicio externo, con data.defectFound = true)
+├─ manage_nonconformances          →  NC_REQUIRES_8D            [rule-pkg-001]
+└─ analyze_visual_patterns         →  (sin handler nativo)      [rule-vision-004]
+```
+
+> **Tools con dueño EXTERNO** (no están en `src/tools/`, no las ejecuta el bus):
+> `detect_out_of_control_signals`, `automate_followups` e
+> `inspect_product_quality`. Si vuelves a registrar un handler nativo para
+> alguna, el mismo hecho se procesará dos veces.
+>
+> Como el bus ya no las ejecuta, **la condición de disparo de sus reglas de
+> salida la tiene que cumplir el payload del externo**: `rule-pkg-001` exige
+> `data.defectFound == true` en el `DEFECT_FOUND` que publiques, o no se abre
+> la no conformidad.
 
 ---
 
@@ -136,7 +165,7 @@ Es exactamente lo mismo, solo cambia la URL y la key:
 - `baseUrl` = `https://www.expo-programador.com`
 - `apiKey` = la key que te dé el admin (creada en Railway con `node scripts/createApiKey.js`)
 
-Tras un `git push` a `main`, Railway redespliega solo. El mismo POST de Postman,
+Tras un `git push` a `feature/filter`, Railway redespliega solo. El mismo POST de Postman,
 apuntando a esa URL, dispara la cadena en la base compartida del equipo. Así pruebas
 la integración real entre tools de distintos programadores.
 

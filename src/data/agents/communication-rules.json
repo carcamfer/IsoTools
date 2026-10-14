@@ -83,16 +83,6 @@
       "description": "Leads de alto puntaje alimentan la predicción de ventas"
     },
     {
-      "id": "rule-erp-009",
-      "sourceToolId": "predict_sales",
-      "targetToolId": "automate_followups",
-      "event": "SALES_PREDICTED",
-      "protocol": "MQTT",
-      "topic": "crm/sales/prediction",
-      "triggerCondition": "closeProbability > 0.6",
-      "description": "Alta probabilidad de venta dispara seguimiento automático"
-    },
-    {
       "id": "rule-cyber-001",
       "sourceToolId": "monitor_ot_network",
       "targetToolId": "detect_network_anomalies_local",
@@ -171,16 +161,6 @@
       "topic": "edge/security/segment",
       "triggerCondition": "criticalPaths.length > 0",
       "description": "Rutas críticas encontradas disparan segmentación preventiva"
-    },
-    {
-      "id": "rule-vision-001",
-      "sourceToolId": "capture_video_stream",
-      "targetToolId": "inspect_product_quality",
-      "event": "FRAME_CAPTURED",
-      "protocol": "Internal",
-      "topic": "edge/vision/frame",
-      "triggerCondition": "always",
-      "description": "Cada frame capturado se pasa al inspector de calidad"
     },
     {
       "id": "rule-vision-002",
@@ -596,6 +576,16 @@
       "description": "Mediciones de calidad capturadas actualizan cartas de control SPC en tiempo real"
     },
     {
+      "id": "rule-qual-002",
+      "sourceToolId": "calculate_control_charts",
+      "targetToolId": "detect_out_of_control_signals",
+      "event": "CHART_POINTS_UPDATED",
+      "protocol": "REST",
+      "topic": "POST /api/quality/spc/detect",
+      "triggerCondition": "always",
+      "description": "Cartas de control actualizadas ejecutan deteccion de senales fuera de control"
+    },
+    {
       "id": "rule-qual-003",
       "sourceToolId": "detect_out_of_control_signals",
       "targetToolId": "manage_nonconformances",
@@ -799,16 +789,6 @@
         "description": "Modo de falla crítico (FMEA) levanta una no conformidad preventiva"
   },
     {
-        "id": "rule-pkg-003",
-        "sourceToolId": "generate_8d_report",
-        "targetToolId": "automate_followups",
-        "event": "8D_REPORT_ISSUED",
-        "protocol": "REST",
-        "topic": "POST /api/quality/followups",
-        "triggerCondition": "always",
-        "description": "Reporte 8D emitido agenda seguimientos hasta el cierre de la acción"
-  },
-    {
         "id": "rule-pkg-004",
         "sourceToolId": "manage_device_registry",
         "targetToolId": "run_msa_analysis",
@@ -889,14 +869,44 @@
         "description": "KPIs generados actualizan el avance del proyecto de implementación ISO"
   },
     {
-        "id": "rule-pkg-012",
-        "sourceToolId": "track_project_progress",
-        "targetToolId": "automate_followups",
-        "event": "PROJECT_AT_RISK",
-        "protocol": "REST",
-        "topic": "POST /api/mgmt/followups",
-        "triggerCondition": "status == 'at_risk'",
-        "description": "Proyecto en riesgo agenda seguimientos automáticos con los responsables"
-  }
+      "id": "rule-conn-001",
+      "sourceToolId": "sync_erp_data_local",
+      "targetToolId": "compare_planned_vs_actual",
+      "event": "ERP_SALES_PERIOD_CLOSED",
+      "protocol": "REST",
+      "topic": "POST /api/mgmt/plan-vs-real",
+      "triggerCondition": "always",
+      "description": "Cierre de ventas del periodo desde el ERP alimenta la comparacion plan vs real"
+    },
+    {
+      "id": "rule-conn-002",
+      "sourceToolId": "sync_erp_data_local",
+      "targetToolId": "manage_nonconformances",
+      "event": "ERP_CUSTOMER_RETURN_REGISTERED",
+      "protocol": "REST",
+      "topic": "POST /api/quality/nc",
+      "triggerCondition": "always",
+      "description": "Devolucion de cliente registrada en el ERP levanta una no conformidad de origen cliente"
+    },
+    {
+      "id": "rule-conn-003",
+      "sourceToolId": "sync_erp_data_local",
+      "targetToolId": "manage_product_specs",
+      "event": "ERP_ITEM_CREATED",
+      "protocol": "REST",
+      "topic": "POST /api/quality/specs",
+      "triggerCondition": "always",
+      "description": "Articulo nuevo en el catalogo del ERP siembra la parte en el registro de especificaciones"
+    },
+    {
+      "id": "rule-conn-004",
+      "sourceToolId": "sync_erp_data_local",
+      "targetToolId": "automate_followups",
+      "event": "ERP_SALES_ORDER_UNFULFILLABLE",
+      "protocol": "REST",
+      "topic": "POST /api/mgmt/followups",
+      "triggerCondition": "always",
+      "description": "Pedido comprometido sin existencia dispara seguimiento comercial"
+    }
   ]
 }

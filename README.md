@@ -20,6 +20,7 @@ Se comunican **solo por HTTP**. Nada de imports cruzados, nada de dependencias c
 - **Necesitas la referencia técnica** → **[`docs/GUIA_TOOLS.md`](./docs/GUIA_TOOLS.md)** (anatomía del handler, reglas de nombrado IES, comunicación, checklist).
 - **Quieres ver qué hace cada tool y con quién habla** → abre el **[cerebro Obsidian](./cerebro/)** (`cerebro/index.md`). Cómo usarlo y coordinarte con la otra tool: **[`pasos/10-cerebro-y-colaboracion.md`](./pasos/10-cerebro-y-colaboracion.md)**.
 - **Vas a levantar y probar el ambiente** → **[`docs/SIMULACION_PASO_A_PASO.md`](./docs/SIMULACION_PASO_A_PASO.md)**.
+- **Necesitas datos del ERP / PLC en tu tool** → **NO te conectes al ERP**. La plataforma central tiene los conectores: leen el sistema externo, lo traducen al estándar ORCA y lo publican en Industrial Events; el Communication Router te lo entrega. Todo el detalle en **[`docs/ERP_CENTRAL.md`](./docs/ERP_CENTRAL.md)**.
 - **Vas a poner login (SSO) y despliegue automático en tu tool** → **[`plantillas/integracion/`](./plantillas/integracion/)**. Código para copiar a tu repo: el módulo OIDC, el Dockerfile que empaqueta tu backend y tu frontend en una imagen, y el workflow de GitHub Actions que despliega a Railway. Lee antes el contrato: **[`docs/PLATAFORMA-SSO.md`](./docs/PLATAFORMA-SSO.md)**.
 - **Tu tool va a tener pantalla** → **[`plantillas/integracion/ui/`](./plantillas/integracion/ui/)**. El tema Control Room —colores, tipografía, espaciado, estructura y componentes— es obligatorio: las cinco tools tienen que verse como una sola aplicación.
 
@@ -53,10 +54,12 @@ IsoTools/
 │   ├── tools/                 ← un archivo por tool + index.js (registro)
 │   ├── data/
 │   │   ├── agents/            ← los 5 JSON de CONTRATO (cambian con el dominio)
-│   │   └── platform/          ← roles.json · deployments.json (cambian al desplegar)
+│   │   ├── platform/          ← roles.json · deployments.json (cambian al desplegar)
+│   │   └── connectors/        ← un JSON por sistema externo conectado (ERP, PLC, MES)
+│   ├── connectors/            ← conectores ERP/PLC → Industrial Events (ver docs/ERP_CENTRAL.md)
 │   ├── services/              ← eventBus · eventsService · catalogService · deploymentService · healthProbe · cache
-│   ├── controllers/           ← eventsController · catalogController · consoleController
-│   ├── routes/                ← eventsRoutes · catalogRoutes · consoleRoutes · authRoutes
+│   ├── controllers/           ← eventsController · catalogController · consoleController · connectorsController
+│   ├── routes/                ← eventsRoutes · catalogRoutes · consoleRoutes · authRoutes · connectorRoutes
 │   ├── middleware/            ← apiKeyAuth · rateLimit · spa
 │   └── db/                    ← conexión, migración y capacidades de Postgres
 │
@@ -506,7 +509,27 @@ curl -H "x-api-key: $API_KEY" \
 
 **Por qué esto es mejor que consultar por fechas:** `seq` no depende de relojes. No necesitas ventanas de solape ni de-duplicar: nunca te llega dos veces lo mismo, nunca se te escapa nada. Si tu tool se cae y vuelve, retoma exactamente donde iba.
 
-> `since_seq=0` significa "desde el principio".
+#### ⚠️ El arranque en frío: NO empieces en `since_seq=0`
+
+`since_seq=0` significa **"desde el principio de los tiempos"**. La primera vez que conectas tu tool contra la plataforma central **ya hay backlog**: eventos viejos que pasaron hace días o semanas y que **ya fueron atendidos** en su momento. Si arrancas el cursor en `0`, tu tool los procesa **todos** como si acabaran de ocurrir y publica una tanda de eventos duplicados — reales, con `seq` nuevo y timestamp de hoy — por hechos que ya se cerraron.
+
+Solo arranca en `0` si de verdad quieres **reprocesar el histórico** y tu tool es idempotente (por ejemplo: deriva un `event_id` determinista del evento padre, para que la plataforma descarte el repetido).
+
+**Arranque correcto: primero pregunta por dónde va la punta, y empieza ahí.**
+
+```bash
+# 1) SOLO la primera vez (no tienes cursor guardado): ¿cuál es el seq más reciente
+#    de los tipos que me interesan?
+curl -s -H "x-api-key: $API_KEY" \
+  "$CORE_BASE_URL/api/v1/events/latest?type=8D_REPORT_ISSUED,PROJECT_AT_RISK" \
+  | jq '.max_seq'      # -> 55   (null si todavía no hay ninguno: arranca en 0)
+
+# 2) Guarda ese 55 como tu cursor y a partir de ahí sí, poll normal.
+curl -H "x-api-key: $API_KEY" \
+  "$CORE_BASE_URL/api/v1/events?since_seq=55&type=8D_REPORT_ISSUED,PROJECT_AT_RISK"
+```
+
+Con eso tu tool solo ve lo que pase **de aquí en adelante**, que es lo que casi siempre quieres. `/events/latest` sin `type` te da la punta global.
 
 ### 5.4 Ventana histórica (`start` / `end`)
 
@@ -646,8 +669,16 @@ const BASE = process.env.CORE_BASE_URL;
 const KEY  = process.env.API_KEY;
 const ME   = 'manage_nonconformances';   // tu tool_id
 
-// 1) Recupera tu cursor de donde lo guardes (archivo, tu DB…). 0 = desde el principio.
-let cursor = await loadCursor() ?? 0;
+// 1) Recupera tu cursor de donde lo guardes (archivo, tu DB…).
+//    Si NO hay cursor guardado (primer arranque) NO uses 0: eso reprocesaría todo
+//    el backlog ya atendido y publicarías duplicados. Empieza en la punta actual.
+let cursor = await loadCursor() ?? await tipSeq();
+
+async function tipSeq () {
+  const res = await fetch(`${BASE}/api/v1/events/latest`, { headers: { 'x-api-key': KEY } });
+  const { max_seq: maxSeq } = await res.json();
+  return maxSeq ?? 0;                                   // null = plataforma vacía
+}
 
 async function tick () {
   const url = `${BASE}/api/v1/events/subscriptions/${ME}?since_seq=${cursor}&limit=200`;

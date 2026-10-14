@@ -38,9 +38,10 @@ tags: [comunicacion, PROJECT_AT_RISK]
      Así el programador del otro lado ve qué cambió sin leer el código.
      Formato:  - [YYYY-MM-DD] (quién) qué cambió en el payload/condición y por qué -->
 - [2026-06-28] (auto) nota inicial generada desde communication-rules.json.
+- [2026-07-27] (Carlos) **`automate_followups` pasa a dueño EXTERNO.** Se retiró el handler nativo y la regla `rule-pkg-012` del bus (duplicaba los seguimientos del servicio externo). El contrato sigue vigente: el servicio externo consume `PROJECT_AT_RISK` por la API y publica `FOLLOWUP_SCHEDULED`. Ojo: la condición `status == 'at_risk'` ya no la evalúa el bus — **la tiene que aplicar el consumidor externo**.
 
 ## Flujo de trabajo
 1. `npm run rama:comm track_project_progress__automate_followups` (crea/cambia a la rama `comm/track_project_progress__automate_followups`).
 2. Implementa el cambio en ambas tools si aplica y actualiza esta bitácora.
-3. PR de la rama a `main` cuando el contrato quede estable.
+3. PR de la rama a `feature/filter` cuando el contrato quede estable.
 

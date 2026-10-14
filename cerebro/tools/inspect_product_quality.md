@@ -4,15 +4,15 @@ id: inspect_product_quality
 nombre: "Inspeccionar Calidad de Producto"
 categoria: vision
 agente: vision-artificial-industrial
-estado: implementada
+estado: externa
 consume: [FRAME_CAPTURED]
 produce: [DEFECT_FOUND]
 programador:
-actualizado: 2026-06-28
-tags: [tool, vision, implementada]
+actualizado: 2026-07-27
+tags: [tool, vision, externa]
 ---
 # Inspeccionar Calidad de Producto
-> `inspect_product_quality` · Edge · categoría **vision** · estado **implementada**
+> `inspect_product_quality` · Edge · categoría **vision** · estado **externa** (sin handler nativo)
 > Pertenece al agente [[../agentes/vision-artificial-industrial|Agente de Visión Artificial Industrial]]
 ## Qué hace
 Detecta defectos superficiales en piezas en la línea de producción usando CNN embebida.
@@ -37,3 +37,4 @@ Detecta defectos superficiales en piezas en la línea de producción usando CNN 
 <!-- Anota aquí cada cambio de contrato/lógica que pueda afectar a otras tools.
      Formato sugerido:  - [YYYY-MM-DD] (tu-nombre) qué cambió y a quién afecta -->
 - [2026-06-28] (auto) nota inicial generada desde la configuración.
+- [2026-07-27] (Carlos) Sale del bus nativo: se eliminó `src/tools/inspect_product_quality.js` y la regla `rule-vision-001`. La implementa ahora un **servicio EXTERNO** que consume `FRAME_CAPTURED` y publica `DEFECT_FOUND` por la API. Sigue en `tools.json`, así que el externo puede usar `GET /api/v1/events/subscriptions/inspect_product_quality?since_seq=N`. **No volver a registrar un handler nativo:** se inspeccionaría el mismo frame dos veces.

@@ -38,9 +38,10 @@ tags: [comunicacion, DEFECT_FOUND]
      Así el programador del otro lado ve qué cambió sin leer el código.
      Formato:  - [YYYY-MM-DD] (quién) qué cambió en el payload/condición y por qué -->
 - [2026-06-28] (auto) nota inicial generada desde communication-rules.json.
+- [2026-07-27] (Carlos) **Cambia quién produce `DEFECT_FOUND`:** ahora el servicio EXTERNO de visión. La regla `rule-vision-004` se conserva, pero `analyze_visual_patterns` sigue sin handler nativo, así que hoy el bus la ignora. Condición `defectFound === true` sobre el payload del externo.
 
 ## Flujo de trabajo
 1. `npm run rama:comm inspect_product_quality__analyze_visual_patterns` (crea/cambia a la rama `comm/inspect_product_quality__analyze_visual_patterns`).
 2. Implementa el cambio en ambas tools si aplica y actualiza esta bitácora.
-3. PR de la rama a `main` cuando el contrato quede estable.
+3. PR de la rama a `feature/filter` cuando el contrato quede estable.
 

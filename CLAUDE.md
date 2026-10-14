@@ -11,6 +11,7 @@ Cada tool de cada equipo se despliega en **su propio subdominio** y es un relyin
 - **Visión y cómo correr:** [`README.md`](./README.md)
 - **Roadmap del programador (1 → 9):** [`pasos/`](./pasos/)
 - **Referencia técnica de tools:** [`docs/GUIA_TOOLS.md`](./docs/GUIA_TOOLS.md)
+- **Conectores ERP/PLC (plataforma central):** [`docs/ERP_CENTRAL.md`](./docs/ERP_CENTRAL.md)
 - **Contrato de SSO entre equipos:** [`docs/PLATAFORMA-SSO.md`](./docs/PLATAFORMA-SSO.md)
 - **Plantillas que cada equipo copia a su repo (SSO + Docker + despliegue + UI):** [`plantillas/integracion/`](./plantillas/integracion/)
 - **Dashboard (frontend):** [`docs/DASHBOARD.md`](./docs/DASHBOARD.md)
@@ -23,6 +24,7 @@ Cada tool de cada equipo se despliega en **su propio subdominio** y es un relyin
 - Cada **comunicación tool↔tool** se trabaja en su rama `comm/<source>__<target>` y se documenta en `cerebro/comunicaciones/`.
 - Al cambiar un contrato entre tools, **anota la bitácora** de la nota de comunicación correspondiente.
 - Tras agregar tools o reglas: `npm run cerebro:generar` (idempotente, no pisa notas existentes).
+- Las tools **no** se conectan al ERP/PLC. Los conectores viven en la plataforma central (`src/connectors/` + `src/data/connectors/*.json`) y publican eventos ya normalizados: `ERP/PLC → conector → Industrial Events → Communication Router → tool(s)`.
 - **El frontend no toca `src/` y el backend no toca `web/`.** Se comunican solo por HTTP, contra `/api/v1/console/*`. Nada de imports cruzados ni de node_modules compartidos.
 - **Ninguna clave de API llega al navegador.** `/api/v1/events` es plano máquina (`x-api-key`); `/api/v1/console` es plano humano (cookie de sesión). Ningún endpoint sirve a los dos.
 - Este repo sigue sin tener **sitio web de marketing**. El dashboard es una consola de operación, no una página pública.

@@ -47,6 +47,8 @@ CI hoy (`/.github/workflows/ci.yml`) corre: `npm install`, `npm run lint`, build
 - [ ] 🟢 `scripts/test_<tool_id>.js` corre y produce salida válida _(smoke aislado del handler — paso 8 § 8.2)._
 - [ ] 🟢 POST a `/api/v1/events` (plataforma central) con tu evento prueba devuelve 201. GET con `?since_seq=0&type=<tu_tipo>` lo encuentra (y avanza el `next_seq`).
 - [ ] 🔵 Smoke test end-to-end vía `curl` muestra el evento de respuesta con `correlation_id` correcto. _(Sin bus + sin columna correlation_id, no aplica hoy.)_
+- [ ] 🟢 **Arranque en frío resuelto:** tu servicio NO empieza el polling en `since_seq=0`. Sin cursor guardado, pide la punta (`GET /events/latest?type=…` → `max_seq`) y arranca ahí. _(Arrancar en 0 reprocesa el backlog ya atendido y publica duplicados reales — [README § 5.3](../README.md#️-el-arranque-en-frío-no-empieces-en-since_seq0).)_
+- [ ] 🟢 **Sin doble dueño:** si tu servicio EXTERNO se hace cargo de una tool, esa tool ya NO tiene handler nativo en `src/tools/index.js` ni reglas que la apunten como `targetToolId`. _(Si quedan las dos, el mismo hecho se procesa dos veces.)_
 
 ### Documentación
 

@@ -38,9 +38,10 @@ tags: [comunicacion, DEFECT_FOUND]
      Así el programador del otro lado ve qué cambió sin leer el código.
      Formato:  - [YYYY-MM-DD] (quién) qué cambió en el payload/condición y por qué -->
 - [2026-06-28] (auto) nota inicial generada desde communication-rules.json.
+- [2026-07-27] (Carlos) **Cambia quién produce `DEFECT_FOUND`:** ya no el placeholder nativo, sino el servicio EXTERNO de visión. La regla `rule-pkg-001` **se conserva**, así que cuando el externo publica el evento el bus abre UNA sola NC. ⚠️ **Contrato para el productor externo:** el `data` DEBE traer `defectFound: true`; la condición `defectFound == true` la evalúa el bus sobre tu payload y si el campo falta, la NC no se abre.
 
 ## Flujo de trabajo
 1. `npm run rama:comm inspect_product_quality__manage_nonconformances` (crea/cambia a la rama `comm/inspect_product_quality__manage_nonconformances`).
 2. Implementa el cambio en ambas tools si aplica y actualiza esta bitácora.
-3. PR de la rama a `main` cuando el contrato quede estable.
+3. PR de la rama a `feature/filter` cuando el contrato quede estable.
 
