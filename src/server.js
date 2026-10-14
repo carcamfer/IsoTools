@@ -26,11 +26,15 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import express from 'express';
 import morgan from 'morgan';
+import fs from 'node:fs';
+import path from 'node:path';
 import config from './config.js';
 import { ensureSchema } from './db/migrate.js';
 import { bootstrapApiKey } from './db/bootstrapApiKey.js';
 import pool, { pingDb } from './db/index.js';
 import eventsRouter from './routes/eventsRoutes.js';
+import artifactsRouter from './routes/artifactsRoutes.js';
+import { checkCoreConnection, getCoreConfig } from './services/coreClient.js';
 import catalogRouter from './routes/catalogRoutes.js';
 import consoleRouter from './routes/consoleRoutes.js';
 import authRouter from './routes/authRoutes.js';
@@ -38,6 +42,7 @@ import connectorsRouter from './routes/connectorRoutes.js';
 import { attachSession, authMode } from './auth/index.js';
 import { createSpaRouter } from './middleware/spa.js';
 import { startConnectors, stopConnectors } from './connectors/runtime.js';
+import { pollerState, startPoller, stopPoller } from './poller.js';
 
 const app = express();
 
@@ -57,6 +62,28 @@ app.use(attachSession);
 app.get('/api/v1/health', (req, res) => {
   res.json({ status: 'ok', service: 'isotools', time: new Date().toISOString() });
 });
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', service: 'isotools', tool: process.env.TOOL_ID || 'isotools', time: new Date().toISOString() });
+});
+app.get('/status', (req, res) => {
+  res.json(pollerState);
+});
+app.get('/ready', async (req, res) => {
+  try {
+    if (process.env.REQUIRE_CORE_CONNECTION === 'true' || process.env.TOOL_ID) {
+      await checkCoreConnection();
+    } else {
+      await pingDb();
+    }
+    return res.json({ status: 'ready', service: process.env.TOOL_ID || 'isotools', time: new Date().toISOString() });
+  } catch (error) {
+    return res.status(503).json({
+      status: 'not_ready',
+      service: process.env.TOOL_ID || 'isotools',
+      error: error.message
+    });
+  }
+});
 
 app.get('/api/v1/ready', async (req, res) => {
   try {
@@ -72,6 +99,7 @@ app.use('/auth', authRouter);
 
 // API de tools (maquina), catalogo (publico) y consola (humano).
 app.use('/api/v1/events', eventsRouter);
+app.use('/api/v1/artifacts', artifactsRouter);
 app.use('/api/v1/catalog', catalogRouter);
 app.use('/api/v1/console', consoleRouter);
 
@@ -86,6 +114,13 @@ app.use('/api', (req, res) => {
 });
 
 // El dashboard compilado. Si no hay build, el core sirve solo la API.
+const UI_DIST_DIR = process.env.UI_DIST_DIR;
+if (UI_DIST_DIR && fs.existsSync(UI_DIST_DIR)) {
+  app.use(express.static(UI_DIST_DIR));
+  app.get('/', (req, res) => {
+    res.sendFile(path.join(UI_DIST_DIR, 'index.html'));
+  });
+}
 const spaRouter = createSpaRouter();
 if (spaRouter) app.use(spaRouter);
 
@@ -100,6 +135,10 @@ app.use((err, req, res, next) => {
     error: err.message || 'Internal Server Error'
   });
 });
+
+// Los servicios publicados como tools requieren configuración del core antes
+// de arrancar; el servidor central local no la necesita.
+if (process.env.REQUIRE_CORE_CONNECTION === 'true') getCoreConfig();
 
 // Verifica el esquema (columnas de cadena causal + cursor seq + idempotencia) y
 // arranca. La migracion es NO fatal: si falla, la API arranca igual.
@@ -121,6 +160,12 @@ const server = await new Promise((resolve) => {
       } else {
         console.log('[connectors] deshabilitados (CONNECTORS_ENABLED=false)');
       }
+      if (process.env.TOOL_ID) {
+        startPoller(process.env.TOOL_ID).catch((err) => {
+          console.error('[poller] no se pudo arrancar:', err.message);
+          pollerState.lastError = { at: new Date().toISOString(), message: err.message };
+        });
+      }
       resolve(s);
     });
   });
@@ -135,6 +180,7 @@ async function shutdown (signal) {
   shuttingDown = true;
   console.log(`[shutdown] ${signal} recibido; drenando...`);
   stopConnectors(); // deja de sondear el ERP antes de cerrar el pool
+  stopPoller();
   const forced = setTimeout(() => {
     console.error('[shutdown] tiempo agotado; salida forzada');
     process.exit(1);

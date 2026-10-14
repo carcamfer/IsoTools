@@ -10,7 +10,7 @@ UI_DIST_DIR=./ui/dist
 # -- Plataforma IsoTools (plano MAQUINA) --------------------------------------
 # Tu clave para publicar y consumir eventos en el core. Se queda DEL LADO DEL
 # SERVIDOR: jamas llega al navegador.
-ISOTOOLS_API_URL=https://isotools-production.up.railway.app/api/v1
+ISOTOOLS_API_URL=https://api-events.orcalabs.mx/api/v1
 ISOTOOLS_API_KEY=
 
 # Clave con la que OTROS servicios (el bus, una saga, otra tool) te llaman a ti.

@@ -20,12 +20,16 @@
     "seed:events": "node scripts/seedEvents.js",
     "seed:stream": "node scripts/simulateStream.js",
     "sim:iso": "node scripts/test_package_iso.js",
+    "test:validate": "node scripts/validate_tool_outputs.js",
+    "test:core-client": "node --test scripts/coreClient.test.js",
+    "test:poller": "node scripts/test_poller.js && node --test scripts/analytics-regressions.test.js",
     "apikey:create": "node scripts/createApiKey.js",
     "cerebro:generar": "node scripts/generar-cerebro.js",
     "rama:comm": "node scripts/crear-rama-comunicacion.js",
     "erp:sync": "node scripts/erpSync.js",
     "erp:gateway": "python3 app.py"
   },
+
   "dependencies": {
     "ajv": "^8.18.0",
     "ajv-formats": "^3.0.1",

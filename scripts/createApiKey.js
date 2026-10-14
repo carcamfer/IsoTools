@@ -6,7 +6,7 @@ import pool from '../src/db/index.js';
 async function main () {
   const label = process.argv[2] || 'default-client';
   const scopesArg = process.argv.find((arg) => arg.startsWith('--scopes='));
-  const scopes = scopesArg ? scopesArg.replace('--scopes=', '').split(',') : ['events:read', 'events:write'];
+  const scopes = scopesArg ? scopesArg.replace('--scopes=', '').split(',') : ['events:read', 'events:write', 'artifacts:read'];
 
   const rawKey = crypto.randomBytes(32).toString('base64url');
   const keyHash = crypto.createHash('sha256').update(rawKey).digest('hex');
