@@ -30,9 +30,11 @@ Monitorea vibración, temperatura, corriente y presión del activo en tiempo rea
 ## Comunicaciones
 **Esta tool dispara a:**
 - [[../comunicaciones/execute_condition_monitoring__manage_work_orders]] — `CONDITION_DEGRADED` → [[manage_work_orders]]
+- `analyze_failure_modes` — `CONDITION_DEGRADED` (consumo por poll directo, sin regla de bus; ver [[analyze_failure_modes]])
 **Esta tool es disparada por:**
 - _ninguna declarada_
 ## Bitácora de cambios
 <!-- Anota aquí cada cambio de contrato/lógica que pueda afectar a otras tools.
      Formato sugerido:  - [YYYY-MM-DD] (tu-nombre) qué cambió y a quién afecta -->
 - [2026-06-28] (auto) nota inicial generada desde la configuración.
+- [2026-10-14] (Rumbar) se documenta que `analyze_failure_modes` ya consume `CONDITION_DEGRADED` por poll (su `consumes` en tools.json estaba vacío por error). Si este tool se implementa, cualquier cambio a la forma del `data` de `CONDITION_DEGRADED` debe avisarse al equipo de `analyze_failure_modes`, aunque no exista una regla formal entre ambas.
