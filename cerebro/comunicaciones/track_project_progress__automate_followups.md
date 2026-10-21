@@ -7,7 +7,7 @@ evento: PROJECT_AT_RISK
 protocolo: REST
 rama: comm/track_project_progress__automate_followups
 programadores:
-actualizado: 2026-06-28
+actualizado: 2026-10-21
 tags: [comunicacion, PROJECT_AT_RISK]
 ---
 # track_project_progress → automate_followups
@@ -39,6 +39,7 @@ tags: [comunicacion, PROJECT_AT_RISK]
      Formato:  - [YYYY-MM-DD] (quién) qué cambió en el payload/condición y por qué -->
 - [2026-06-28] (auto) nota inicial generada desde communication-rules.json.
 - [2026-07-27] (Carlos) **`automate_followups` pasa a dueño EXTERNO.** Se retiró el handler nativo y la regla `rule-pkg-012` del bus (duplicaba los seguimientos del servicio externo). El contrato sigue vigente: el servicio externo consume `PROJECT_AT_RISK` por la API y publica `FOLLOWUP_SCHEDULED`. Ojo: la condición `status == 'at_risk'` ya no la evalúa el bus — **la tiene que aplicar el consumidor externo**.
+- [2026-10-21] (Carlos) **Se repone `rule-pkg-012`** con el mismo id y contrato (REST `POST /api/mgmt/followups`, `status == 'at_risk'`). Ya no duplica: el handler nativo no existe y `automate_followups` es `federated` con subdominio `af`, así que el bus delega en vez de ejecutar. Recupera la arista en `/events/chain` (la entrega por poll nunca se perdió). La condición vuelve a evaluarla el bus para decidir si **anota** la arista, pero el poll se guía por `consumes`, así que el servicio externo **sigue recibiendo todos** los `PROJECT_AT_RISK` y debe seguir filtrando por `status == 'at_risk'` él mismo.
 
 ## Flujo de trabajo
 1. `npm run rama:comm track_project_progress__automate_followups` (crea/cambia a la rama `comm/track_project_progress__automate_followups`).

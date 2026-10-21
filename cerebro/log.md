@@ -1,6 +1,6 @@
 ---
 title: Bitácora del cerebro
-updated: 2026-07-27
+updated: 2026-10-21
 ---
 
 # Bitácora del cerebro de IsoTools
@@ -95,3 +95,10 @@ Registro cronológico de cambios significativos en el vault. Una línea por even
 - Lo que de verdad falta es la **trazabilidad**: sin la regla, `/events/chain/:correlationId` no muestra la arista `calculate_control_charts → detect_out_of_control_signals`. La cadena causal del log de evidencia tiene un salto, y eso es justo lo que una auditoría mira.
 - **Y ahora restaurarla es seguro.** Se borró porque el placeholder del core duplicaba `OUT_OF_CONTROL_DETECTED`. Hoy la tool es `federated` con subdominio, así que `isHandledExternally()` da `true` y el bus **delegaría en lugar de ejecutar**: no hay duplicado posible. La federación resolvió bien el problema que el borrado de la regla parchó.
 - Decisión pendiente: reponer `rule-qual-002` en su rama `comm/calculate_control_charts__detect_out_of_control_signals` (la nota ya existe).
+
+## [2026-10-21] Se reponen `rule-pkg-003` y `rule-pkg-012` (entradas de `automate_followups`)
+- Mismo caso que `rule-qual-002`. Las dos se borraron el 2026-07-27 junto con el handler nativo de `automate_followups`, porque el placeholder y el servicio externo agendaban el mismo seguimiento dos veces. Quitar el handler fue correcto; borrar las reglas fue el parche de más.
+- Reponerlas no duplica nada: `automate_followups` es `federated` con subdominio `af`, así que `isHandledExternally()` da `true` y el bus **delega**; además ya no hay handler en `src/tools/`, así que ni en local sin URL hay nada que ejecutar.
+- Lo que se recupera es la **trazabilidad**, no la entrega: la tool ya recibía `8D_REPORT_ISSUED` y `PROJECT_AT_RISK` por poll (los declara en `consumes`). Sin las reglas, `/events/chain` cortaba la cadena NC → 8D → seguimiento y KPIs → proyecto en riesgo → seguimiento.
+- Mismos ids y contratos que tenían. `rule-erp-009` (`SALES_PREDICTED`) **no** se repone: el servicio externo todavía no consume `SALES_PREDICTED`.
+- Bitácoras: [[comunicaciones/generate_8d_report__automate_followups]], [[comunicaciones/track_project_progress__automate_followups]].
