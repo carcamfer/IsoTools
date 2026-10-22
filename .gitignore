@@ -22,6 +22,10 @@ Thumbs.db
 *.swp
 *~
 
+# Resultados locales de demos y dashboards
+logs/
+artifacts/*-2026-*.json
+
 # Obsidian — el vault del cerebro se versiona, pero el estado local del editor no
 cerebro/.obsidian/workspace.json
 cerebro/.obsidian/workspace-mobile.json

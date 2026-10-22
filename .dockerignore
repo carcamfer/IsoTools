@@ -5,6 +5,12 @@
 web/dist
 .env
 .env.local
+.env.*
+!*.example
 .git
+.github
 npm-debug.log*
 docker-compose.yml
+artifacts
+logs
+README.md

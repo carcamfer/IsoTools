@@ -1,0 +1,30 @@
+{
+  "timestamp": "2026-07-31T00:44:44.070Z",
+  "artifacts": [
+    {
+      "tool": "calculate_control_charts",
+      "result": {
+        "ok": true,
+        "errors": null
+      },
+      "outputPath": "C:\\Users\\alexc\\.copilot\\repos\\copilot-worktrees\\IsoTools\\alexcprado10-reimagined-spoon\\artifacts\\calculate_control_charts-output-2026-07-31T00-44-44-042Z.json"
+    },
+    {
+      "tool": "detect_business_anomalies",
+      "result": {
+        "ok": true,
+        "errors": null
+      },
+      "outputPath": "C:\\Users\\alexc\\.copilot\\repos\\copilot-worktrees\\IsoTools\\alexcprado10-reimagined-spoon\\artifacts\\detect_business_anomalies-output-2026-07-31T00-44-44-042Z.json"
+    },
+    {
+      "tool": "generate_kpis",
+      "result": {
+        "ok": true,
+        "errors": null
+      },
+      "outputPath": "C:\\Users\\alexc\\.copilot\\repos\\copilot-worktrees\\IsoTools\\alexcprado10-reimagined-spoon\\artifacts\\generate_kpis-output-2026-07-31T00-44-44-042Z.json"
+    }
+  ],
+  "overallValid": true
+}

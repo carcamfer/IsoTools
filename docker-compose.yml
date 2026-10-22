@@ -1,4 +1,40 @@
 services:
+  calculate-control-charts:
+    build:
+      context: .
+      dockerfile: tools/calculate_control_charts/Docker/Dockerfile
+    container_name: isotools-calculate-control-charts
+    profiles: ["tools"]
+    ports:
+      - "8101:8101"
+    environment:
+      ISOTOOLS_API_URL: ${ISOTOOLS_API_URL:-https://api-events.orcalabs.mx/api/v1}
+      ISOTOOLS_API_KEY: ${ISOTOOLS_API_KEY_CALCULATE_CONTROL_CHARTS:-}
+
+  detect-business-anomalies:
+    build:
+      context: .
+      dockerfile: tools/detect_business_anomalies/Docker/Dockerfile
+    container_name: isotools-detect-business-anomalies
+    profiles: ["tools"]
+    ports:
+      - "8102:8101"
+    environment:
+      ISOTOOLS_API_URL: ${ISOTOOLS_API_URL:-https://api-events.orcalabs.mx/api/v1}
+      ISOTOOLS_API_KEY: ${ISOTOOLS_API_KEY_DETECT_BUSINESS_ANOMALIES:-}
+
+  generate-kpis:
+    build:
+      context: .
+      dockerfile: tools/generate_kpis/Docker/Dockerfile
+    container_name: isotools-generate-kpis
+    profiles: ["tools"]
+    ports:
+      - "8103:8101"
+    environment:
+      ISOTOOLS_API_URL: ${ISOTOOLS_API_URL:-https://api-events.orcalabs.mx/api/v1}
+      ISOTOOLS_API_KEY: ${ISOTOOLS_API_KEY_GENERATE_KPIS:-}
+
   api:
     build: .
     container_name: isotools-api

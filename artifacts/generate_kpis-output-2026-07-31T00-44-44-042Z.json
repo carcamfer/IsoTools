@@ -1,0 +1,31 @@
+{
+  "projectId": "PROJECT-ISO-9001",
+  "plantId": "P1",
+  "period": "2026-07",
+  "kpis": [
+    {
+      "name": "OEE",
+      "value": 0.85,
+      "unit": "",
+      "trend": "up"
+    },
+    {
+      "name": "Scrap Rate",
+      "value": 5.5,
+      "unit": "%",
+      "trend": "up"
+    },
+    {
+      "name": "On Time Delivery",
+      "value": 0.95,
+      "unit": "",
+      "trend": "up"
+    },
+    {
+      "name": "Cost Per Unit",
+      "value": 12.5,
+      "unit": "USD",
+      "trend": "stable"
+    }
+  ]
+}

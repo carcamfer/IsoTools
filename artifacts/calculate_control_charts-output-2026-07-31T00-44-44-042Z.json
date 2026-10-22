@@ -1,0 +1,20 @@
+{
+  "chartId": "CHART-TEST-A",
+  "ucl": 10.276374999999998,
+  "lcl": 9.843625,
+  "centerLine": 10.059999999999999,
+  "plotPoints": [
+    10.1,
+    9.9,
+    10.3,
+    9.8,
+    10.2,
+    10,
+    10.05,
+    9.95,
+    10.2,
+    10.1
+  ],
+  "outOfControlPoints": [],
+  "inControl": true
+}

@@ -157,6 +157,18 @@ Ver [§ 5](#5-consumir-cómo-pedir-solo-los-datos-que-necesitas) para el detalle
 
 > **Correr la plataforma tú mismo es tarea exclusiva del admin** (deploy en Railway): ver [`pasos/02` § 2.2](./pasos/02-api-central.md). Los programadores nunca levantan la plataforma.
 
+### Tools analíticas incluidas en este repositorio
+
+Este paquete añade `calculate_control_charts`, `detect_business_anomalies` y `generate_kpis` como tools nativas del core, con sus Dockerfiles para empaquetarlas individualmente. En modo federado, cada servicio define `TOOL_ID`, `ISOTOOLS_API_URL=https://api-events.orcalabs.mx/api/v1` y su propia API key registrada en el core como secreto `ISOTOOLS_API_KEY`. El poller consume la suscripción de la tool, publica resultados con los IDs causales conservados y expone cursor/errores en `/status`; `/ready` comprueba acceso autenticado. No pongas credenciales en Git.
+
+| Tool | Dockerfile |
+|------|------------|
+| `calculate_control_charts` | `tools/calculate_control_charts/Docker/Dockerfile` |
+| `detect_business_anomalies` | `tools/detect_business_anomalies/Docker/Dockerfile` |
+| `generate_kpis` | `tools/generate_kpis/Docker/Dockerfile` |
+
+Los contenedores locales se pueden levantar con `docker compose --profile tools up --build -d`. En el primer arranque el poller fija el cursor al evento más reciente para saltar el backlog; el cursor vive en memoria y un reinicio vuelve a saltar eventos previos. Revisa `/status` para confirmar que `lastPollAt` avanza y `lastError` es `null`.
+
 ### Scripts útiles (admin)
 
 | Script | Uso |

@@ -6,8 +6,8 @@
 # `plantillas/integracion/despliegue/`, contra SU propio proyecto Railway.
 #
 # Dos trabajos, en este orden y no al revés:
-#   verificar  — corre también en pull request. Es la única red de seguridad que
-#                hay: este repo no tiene suite de pruebas.
+#   verificar  — corre también en pull request, incluyendo los smoke tests de las
+#                tools analíticas.
 #   desplegar  — solo desde `main`, y solo si `verificar` pasó.
 #
 # SECRETOS que necesita (Settings -> Secrets and variables -> Actions):
@@ -73,6 +73,15 @@ jobs:
           set -euo pipefail
           find src scripts -name '*.js' -print0 | xargs -0 -n1 node --check
           echo "OK: sintaxis del backend"
+
+      - name: Probar tools analíticas y cliente del core
+        run: |
+          pnpm run test:core-client
+          pnpm run test:poller
+          node scripts/test_calculate_control_charts.js
+          node scripts/test_detect_business_anomalies.js
+          node scripts/test_generate_kpis.js
+          pnpm run test:validate
 
       # El chequeo que de verdad protege al dashboard. Un `toolId` mal escrito en
       # deployments.json no rompe nada: simplemente esa tool NUNCA aparece en la

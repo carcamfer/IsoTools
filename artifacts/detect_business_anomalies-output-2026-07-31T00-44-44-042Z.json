@@ -1,0 +1,15 @@
+{
+  "anomalies": [
+    {
+      "metric": "scrap_rate",
+      "expected": 1.1350000000000002,
+      "observed": 3.4050000000000007,
+      "unit": "%",
+      "zScore": 22.066,
+      "severity": "critical"
+    }
+  ],
+  "criticalCount": 1,
+  "plantId": "P1",
+  "period": "monthly"
+}
