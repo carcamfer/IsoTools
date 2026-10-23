@@ -6,9 +6,13 @@
 # `plantillas/integracion/despliegue/`, contra SU propio proyecto Railway.
 #
 # Dos trabajos, en este orden y no al revés:
-#   verificar  — corre también en pull request. Es la única red de seguridad que
-#                hay: este repo no tiene suite de pruebas.
-#   desplegar  — solo desde `main`, y solo si `verificar` pasó.
+#   verificar  — corre en cada push y pull request a `main` y `feature/filter`.
+#                Es la única red de seguridad que hay antes de producción.
+#   desplegar  — SOLO a mano (Run workflow). El despliegue normal lo hace el
+#                autodeploy de Railway; dos caminos automáticos a producción se
+#                pisan: el 2026-10-23 un push a `feature/filter` desplegado por
+#                Railway tapó lo que este job había desplegado desde `main` y el
+#                dashboard perdió 12 de las 16 tools (ver cerebro/log.md).
 #
 # SECRETOS que necesita (Settings -> Secrets and variables -> Actions):
 #   RAILWAY_TOKEN   token de PROYECTO de Railway (no de cuenta — ver
@@ -22,7 +26,7 @@ name: Deploy IsoTools a Railway
 
 on:
   push:
-    branches: [main]
+    branches: [main, feature/filter]
     # Documentación y material de apoyo no cambian la imagen. `plantillas/` se copia
     # a otros repos: tocarla no altera lo que corre aquí.
     paths-ignore:
@@ -33,7 +37,7 @@ on:
       - "recursos/**"
       - "plantillas/**"
   pull_request:
-    branches: [main]
+    branches: [main, feature/filter]
   workflow_dispatch:
 
 # Dos merges seguidos no deben desplegar en paralelo y pisarse.
@@ -98,9 +102,9 @@ jobs:
   desplegar:
     name: Desplegar
     needs: verificar
-    # En un pull request solo se verifica. Desplegar desde una rama sin fusionar
-    # pondría en producción código que nadie aprobó.
-    if: github.event_name != 'pull_request'
+    # Solo a mano. El camino normal a producción es el autodeploy de Railway;
+    # este job queda como redespliegue de emergencia con sus comprobaciones.
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
 
     # Descomenta para exigir aprobación manual antes de producción.
