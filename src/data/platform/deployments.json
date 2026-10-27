@@ -19,54 +19,25 @@
       "quality.technical-authority",
       "quality.director"
     ],
-    "maintenance": [
-      "maintenance.technician",
-      "maintenance.manager"
-    ],
-    "production": [
-      "operator",
-      "operations.manager"
-    ],
-    "erp": [
-      "operations.manager"
-    ],
-    "supply-chain": [
-      "operations.manager"
-    ],
-    "energy": [
-      "operations.manager"
-    ],
-    "safety": [
-      "operator",
-      "operations.manager"
-    ],
-    "control": [
-      "operator",
-      "operations.manager"
-    ],
-    "vision": [
-      "quality.engineer",
-      "operations.manager"
-    ],
-    "ai-ml": [
-      "operations.manager"
-    ],
-    "digital-twin": [
-      "operations.manager"
-    ],
-    "infrastructure": [
-      "platform.admin"
-    ],
-    "cybersecurity": [
-      "platform.admin"
-    ]
+    "maintenance": ["maintenance.technician", "maintenance.manager"],
+    "production": ["operator", "operations.manager"],
+    "erp": ["operations.manager"],
+    "supply-chain": ["operations.manager"],
+    "energy": ["operations.manager"],
+    "safety": ["operator", "operations.manager"],
+    "control": ["operator", "operations.manager"],
+    "vision": ["quality.engineer", "operations.manager"],
+    "ai-ml": ["operations.manager"],
+    "digital-twin": ["operations.manager"],
+    "infrastructure": ["platform.admin"],
+    "cybersecurity": ["platform.admin"]
   },
   "tools": [
     {
       "toolId": "manage_product_specs",
       "kind": "federated",
       "status": "live",
-      "subdomain": "specs",
+      "subdomain": "mps",
       "localPort": 8101,
       "owner": "Calidad (ai-iso)",
       "repo": "ai-iso",
@@ -83,7 +54,7 @@
       "toolId": "manage_device_registry",
       "kind": "federated",
       "status": "live",
-      "subdomain": "devices",
+      "subdomain": "mdr",
       "localPort": 8102,
       "owner": "Calidad (ai-iso)",
       "repo": "ai-iso",
@@ -101,7 +72,7 @@
       "toolId": "manage_nonconformances",
       "kind": "federated",
       "status": "live",
-      "subdomain": "nc",
+      "subdomain": "mnc",
       "localPort": 8103,
       "owner": "Calidad (ai-iso)",
       "repo": "ai-iso",
@@ -129,18 +100,20 @@
     {
       "toolId": "collect_quality_measurements",
       "kind": "federated",
-      "status": "pending",
+      "status": "live",
+      "subdomain": "cqm",
       "owner": "pendiente de asignar",
       "isoClause": "8.5.1",
-      "note": "Federada por contrato: su equipo sera dueno del servicio. Todavia no declara `subdomain`, asi que la URL no se resuelve y el bus cae de vuelta al handler de src/tools/ (el fallback documentado en CLAUDE.md): la cadena ISO sigue viva sin desplegar nada. Ese handler queda como REFERENCIA del contrato para quien implemente el servicio. En cuanto el equipo declare aqui su `subdomain`, el router delega en el y deja de ejecutarlo."
+      "note": "Servicio en Railway (Online en el panel) y el CNAME de cqm.orcalabs.mx ya resuelve, pero GET https://cqm.orcalabs.mx/health falla por TLS (el certificado no corresponde al dominio) y sin verificar TLS devuelve 404 `Application not found` con `x-railway-fallback: true`: Railway no tiene el Custom Domain asociado al servicio, o aun no termina de verificarlo. El dashboard lo pinta en rojo hasta que se corrija. El router ya DELEGA por URL resoluble; el poll del servicio es saliente y no depende de su dominio."
     },
     {
       "toolId": "calculate_control_charts",
       "kind": "federated",
-      "status": "pending",
+      "status": "live",
+      "subdomain": "ccc",
       "owner": "pendiente de asignar",
       "isoClause": "9.1.3",
-      "note": "Federada por contrato: su equipo sera dueno del servicio. Todavia no declara `subdomain`, asi que la URL no se resuelve y el bus cae de vuelta al handler de src/tools/ (el fallback documentado en CLAUDE.md): la cadena ISO sigue viva sin desplegar nada. Ese handler queda como REFERENCIA del contrato para quien implemente el servicio. En cuanto el equipo declare aqui su `subdomain`, el router delega en el y deja de ejecutarlo."
+      "note": "Servicio en Railway, verificado con GET https://ccc.orcalabs.mx/health -> 200 {\"tool\":\"calculate_control_charts\"}. El router DELEGA y ya no ejecuta su handler de src/tools/, que queda como referencia del contrato."
     },
     {
       "toolId": "detect_out_of_control_signals",
@@ -157,10 +130,11 @@
     {
       "toolId": "generate_8d_report",
       "kind": "federated",
-      "status": "pending",
+      "status": "live",
+      "subdomain": "g8r",
       "owner": "pendiente de asignar",
       "isoClause": "10.2",
-      "note": "Federada por contrato: su equipo sera dueno del servicio. Todavia no declara `subdomain`, asi que la URL no se resuelve y el bus cae de vuelta al handler de src/tools/ (el fallback documentado en CLAUDE.md): la cadena ISO sigue viva sin desplegar nada. Ese handler queda como REFERENCIA del contrato para quien implemente el servicio. En cuanto el equipo declare aqui su `subdomain`, el router delega en el y deja de ejecutarlo."
+      "note": "Servicio en Railway (Online en el panel) y el CNAME de g8r.orcalabs.mx ya resuelve, pero GET https://g8r.orcalabs.mx/health falla por TLS (el certificado no corresponde al dominio) y sin verificar TLS devuelve 404 `Application not found` con `x-railway-fallback: true`: Railway no tiene el Custom Domain asociado al servicio, o aun no termina de verificarlo. El dashboard lo pinta en rojo hasta que se corrija. El router ya DELEGA por URL resoluble; el poll del servicio es saliente y no depende de su dominio."
     },
     {
       "toolId": "analyze_failure_modes",
@@ -172,31 +146,34 @@
       "repo": "rumbar-tools",
       "isoClause": "6.1",
       "summary": "Calcula RPN por modo de falla (AIAG FMEA-4) y la estrategia del arbol de decision RCM; publica FMEA_CRITICAL_FOUND.",
-      "note": "Servicio en Railway, verificado con GET https://rap.orcalabs.mx/health -> 200. Mismo equipo y repo que detect_out_of_control_signals. A diferencia de esa, esta tool NUNCA tuvo una regla en communication-rules.json que la disparara automatico (`consumes: []` por diseno desde el paquete nativo original), asi que no hay historia de regla borrada ni riesgo de duplicado por el lado del bus: siempre funciono por poll directo. El handler nativo en src/tools/analyze_failure_modes.js sigue en el repo como referencia del contrato, inofensivo."
+      "note": "Servicio `rumbar-analyze` en Railway, verificado con GET https://rap.orcalabs.mx/health -> 200 {\"tool\":\"analyze_failure_modes\"}. El router DELEGA y ya no ejecuta su handler de src/tools/, que queda como referencia del contrato. Mismo equipo y repo que detect_out_of_control_signals. A diferencia de esa, esta tool NUNCA tuvo una regla en communication-rules.json que la disparara automatico (declaraba `consumes: []` hasta que el PR de contrato lo corrigio a `CONDITION_DEGRADED`), asi que no hay historia de regla borrada ni riesgo de duplicado por el lado del bus: siempre funciono por poll directo. El handler nativo en src/tools/analyze_failure_modes.js sigue en el repo como referencia del contrato, inofensivo."
     },
     {
       "toolId": "calculate_cpk_ppk",
       "kind": "federated",
-      "status": "pending",
+      "status": "live",
+      "subdomain": "ccp",
       "owner": "pendiente de asignar",
       "isoClause": "9.1.3",
-      "note": "Federada por contrato: su equipo sera dueno del servicio. Todavia no declara `subdomain`, asi que la URL no se resuelve y el bus cae de vuelta al handler de src/tools/ (el fallback documentado en CLAUDE.md): la cadena ISO sigue viva sin desplegar nada. Ese handler queda como REFERENCIA del contrato para quien implemente el servicio. En cuanto el equipo declare aqui su `subdomain`, el router delega en el y deja de ejecutarlo."
+      "note": "Servicio en Railway (Online en el panel) y el CNAME de ccp.orcalabs.mx ya resuelve, pero GET https://ccp.orcalabs.mx/health falla por TLS (el certificado no corresponde al dominio) y sin verificar TLS devuelve 404 `Application not found` con `x-railway-fallback: true`: Railway no tiene el Custom Domain asociado al servicio, o aun no termina de verificarlo. El dashboard lo pinta en rojo hasta que se corrija. El router ya DELEGA por URL resoluble; el poll del servicio es saliente y no depende de su dominio."
     },
     {
       "toolId": "run_msa_analysis",
       "kind": "federated",
-      "status": "pending",
+      "status": "live",
+      "subdomain": "rma",
       "owner": "pendiente de asignar",
       "isoClause": "7.1.5.2",
-      "note": "Federada por contrato: su equipo sera dueno del servicio. Todavia no declara `subdomain`, asi que la URL no se resuelve y el bus cae de vuelta al handler de src/tools/ (el fallback documentado en CLAUDE.md): la cadena ISO sigue viva sin desplegar nada. Ese handler queda como REFERENCIA del contrato para quien implemente el servicio. En cuanto el equipo declare aqui su `subdomain`, el router delega en el y deja de ejecutarlo."
+      "note": "Servicio en Railway (Online en el panel) y el CNAME de rma.orcalabs.mx ya resuelve, pero GET https://rma.orcalabs.mx/health falla por TLS (el certificado no corresponde al dominio) y sin verificar TLS devuelve 404 `Application not found` con `x-railway-fallback: true`: Railway no tiene el Custom Domain asociado al servicio, o aun no termina de verificarlo. El dashboard lo pinta en rojo hasta que se corrija. El router ya DELEGA por URL resoluble; el poll del servicio es saliente y no depende de su dominio."
     },
     {
       "toolId": "detect_business_anomalies",
       "kind": "federated",
-      "status": "pending",
+      "status": "live",
+      "subdomain": "dba",
       "owner": "pendiente de asignar",
       "isoClause": "9.1.3",
-      "note": "Federada por contrato: su equipo sera dueno del servicio. Todavia no declara `subdomain`, asi que la URL no se resuelve y el bus cae de vuelta al handler de src/tools/ (el fallback documentado en CLAUDE.md): la cadena ISO sigue viva sin desplegar nada. Ese handler queda como REFERENCIA del contrato para quien implemente el servicio. En cuanto el equipo declare aqui su `subdomain`, el router delega en el y deja de ejecutarlo."
+      "note": "Servicio en Railway, verificado con GET https://dba.orcalabs.mx/health -> 200 {\"tool\":\"detect_business_anomalies\"}. El router DELEGA y ya no ejecuta su handler de src/tools/, que queda como referencia del contrato."
     },
     {
       "toolId": "compare_planned_vs_actual",
@@ -212,18 +189,20 @@
     {
       "toolId": "generate_kpis",
       "kind": "federated",
-      "status": "pending",
+      "status": "live",
+      "subdomain": "gk",
       "owner": "pendiente de asignar",
       "isoClause": "9.1.1",
-      "note": "Federada por contrato: su equipo sera dueno del servicio. Todavia no declara `subdomain`, asi que la URL no se resuelve y el bus cae de vuelta al handler de src/tools/ (el fallback documentado en CLAUDE.md): la cadena ISO sigue viva sin desplegar nada. Ese handler queda como REFERENCIA del contrato para quien implemente el servicio. En cuanto el equipo declare aqui su `subdomain`, el router delega en el y deja de ejecutarlo."
+      "note": "Servicio en Railway, verificado con GET https://gk.orcalabs.mx/health -> 200 {\"tool\":\"generate_kpis\"}. El router DELEGA y ya no ejecuta su handler de src/tools/, que queda como referencia del contrato."
     },
     {
       "toolId": "track_project_progress",
       "kind": "federated",
-      "status": "pending",
+      "status": "live",
+      "subdomain": "tpp",
       "owner": "pendiente de asignar",
       "isoClause": "6.2",
-      "note": "Federada por contrato: su equipo sera dueno del servicio. Todavia no declara `subdomain`, asi que la URL no se resuelve y el bus cae de vuelta al handler de src/tools/ (el fallback documentado en CLAUDE.md): la cadena ISO sigue viva sin desplegar nada. Ese handler queda como REFERENCIA del contrato para quien implemente el servicio. En cuanto el equipo declare aqui su `subdomain`, el router delega en el y deja de ejecutarlo."
+      "note": "Servicio en Railway, verificado con GET https://tpp.orcalabs.mx/health -> 200. El router DELEGA y ya no ejecuta su handler de src/tools/, que queda como referencia del contrato."
     },
     {
       "toolId": "automate_followups",
@@ -235,7 +214,7 @@
       "repo": "tool-vision-followups",
       "isoClause": "10.2",
       "summary": "Agenda y da seguimiento a acciones derivadas de 8D, proyectos en riesgo y pedidos sin surtir.",
-      "note": "Mismo caso que inspect_product_quality: el handler nativo se retiro el 2026-07-27 y la entrada se quedo en `native`. Con `subdomain` declarado, isHandledExternally() ya devuelve true, asi que el bus DELEGA en su servicio en lugar de ignorar la regla en silencio — eso es lo que habilita `rule-conn-004` (ERP_SALES_ORDER_UNFULFILLABLE). Los roles se heredan de la categoria `erp`. El nombre del EQUIPO sigue pendiente: aqui solo consta el repo."
+      "note": "Mismo caso que inspect_product_quality: el handler nativo se retiro el 2026-07-27 y la entrada se quedo en `native`. Con `subdomain` declarado, isHandledExternally() ya devuelve true, asi que el bus DELEGA en su servicio en lugar de ignorar la regla en silencio — eso es lo que habilita `rule-conn-004` (ERP_SALES_ORDER_UNFULFILLABLE), y desde el 2026-10-21 tambien `rule-pkg-003` (8D_REPORT_ISSUED) y `rule-pkg-012` (PROJECT_AT_RISK), repuestas para que la cadena de evidencia muestre esas aristas. Los roles se heredan de la categoria `erp`. El nombre del EQUIPO sigue pendiente: aqui solo consta el repo."
     }
   ]
 }
