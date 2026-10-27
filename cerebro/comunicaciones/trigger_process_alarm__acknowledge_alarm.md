@@ -42,5 +42,5 @@ tags: [comunicacion, ALARM_ACTIVATED]
 ## Flujo de trabajo
 1. `npm run rama:comm trigger_process_alarm__acknowledge_alarm` (crea/cambia a la rama `comm/trigger_process_alarm__acknowledge_alarm`).
 2. Implementa el cambio en ambas tools si aplica y actualiza esta bitácora.
-3. PR de la rama a `main` cuando el contrato quede estable.
+3. PR de la rama a `feature/filter` cuando el contrato quede estable.
 

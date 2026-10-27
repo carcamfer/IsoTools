@@ -42,5 +42,5 @@ tags: [comunicacion, PACKETS_INSPECTED]
 ## Flujo de trabajo
 1. `npm run rama:comm inspect_gateway_traffic__detect_anomaly_patterns` (crea/cambia a la rama `comm/inspect_gateway_traffic__detect_anomaly_patterns`).
 2. Implementa el cambio en ambas tools si aplica y actualiza esta bitácora.
-3. PR de la rama a `main` cuando el contrato quede estable.
+3. PR de la rama a `feature/filter` cuando el contrato quede estable.
 

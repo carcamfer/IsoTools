@@ -42,5 +42,5 @@ tags: [comunicacion, ORDER_RECOMMENDED]
 ## Flujo de trabajo
 1. `npm run rama:comm recommend_purchase_orders__generate_purchase_order` (crea/cambia a la rama `comm/recommend_purchase_orders__generate_purchase_order`).
 2. Implementa el cambio en ambas tools si aplica y actualiza esta bitácora.
-3. PR de la rama a `main` cuando el contrato quede estable.
+3. PR de la rama a `feature/filter` cuando el contrato quede estable.
 

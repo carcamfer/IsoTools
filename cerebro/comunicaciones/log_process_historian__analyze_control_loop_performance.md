@@ -42,5 +42,5 @@ tags: [comunicacion, HISTORIAN_BATCH_READY]
 ## Flujo de trabajo
 1. `npm run rama:comm log_process_historian__analyze_control_loop_performance` (crea/cambia a la rama `comm/log_process_historian__analyze_control_loop_performance`).
 2. Implementa el cambio en ambas tools si aplica y actualiza esta bitácora.
-3. PR de la rama a `main` cuando el contrato quede estable.
+3. PR de la rama a `feature/filter` cuando el contrato quede estable.
 

@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "cerebro/comunicaciones/analyze_failure_modes__schedule_preventive_maintenance.md",
+                "file": "cerebro/comunicaciones/detect_out_of_control_signals__manage_nonconformances.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "analyze_failure_modes__schedule_preventive_maintenance"
+              "title": "detect_out_of_control_signals__manage_nonconformances"
             }
           }
         ]
@@ -94,7 +94,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "cerebro/comunicaciones/analyze_failure_modes__schedule_preventive_maintenance.md",
+                "file": "cerebro/comunicaciones/calculate_cpk_ppk__manage_product_specs.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -104,7 +104,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for analyze_failure_modes__schedule_preventive_maintenance"
+              "title": "Backlinks for calculate_cpk_ppk__manage_product_specs"
             }
           },
           {
@@ -113,12 +113,12 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "cerebro/comunicaciones/analyze_failure_modes__schedule_preventive_maintenance.md",
+                "file": "cerebro/comunicaciones/calculate_cpk_ppk__manage_product_specs.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
               "icon": "links-going-out",
-              "title": "Outgoing links from analyze_failure_modes__schedule_preventive_maintenance"
+              "title": "Outgoing links from calculate_cpk_ppk__manage_product_specs"
             }
           },
           {
@@ -156,13 +156,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "cerebro/comunicaciones/analyze_failure_modes__schedule_preventive_maintenance.md",
+                "file": "cerebro/comunicaciones/calculate_cpk_ppk__manage_product_specs.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of analyze_failure_modes__schedule_preventive_maintenance"
+              "title": "Outline of calculate_cpk_ppk__manage_product_specs"
             }
           }
         ]
@@ -185,33 +185,34 @@
   },
   "active": "9b74df0ff076c72c",
   "lastOpenFiles": [
+    "INTER-TOOL-INTEGRATION_es-MX.md",
+    "cerebro/comunicaciones/compare_planned_vs_actual__detect_business_anomalies.md",
+    "pasos/05-anatomia-tool.md",
+    "pasos/04-nombrado-ies.md",
+    "pasos/02-api-central.md",
+    "pasos/03-archivos-json.md",
+    "pasos/01-vision-general.md",
+    "cerebro/comunicaciones/detect_out_of_control_signals__manage_nonconformances.md",
+    "cerebro/comunicaciones/manage_nonconformances__generate_8d_report.md",
+    "cerebro/comunicaciones/calculate_cpk_ppk__manage_product_specs.md",
+    "cerebro/tools/calculate_cpk_ppk.md",
+    "cerebro/comunicaciones/collect_quality_measurements__calculate_control_charts.md",
+    "cerebro/tools/analyze_failure_modes.md",
+    "pasos/10-cerebro-y-colaboracion.md",
+    "pasos/09-checklist-merge.md",
+    "pasos/08-pruebas-locales.md",
+    "pasos/07-placeholder.md",
+    "pasos/06-regla-comunicacion.md",
+    "cerebro/tools/calculate_control_charts.md",
+    "cerebro/comunicaciones/detect_energy_waste__optimize_energy_loads.md",
+    "cerebro/comunicaciones/analyze_visual_patterns__train_vision_model.md",
+    "cerebro/comunicaciones/analyze_failure_modes__manage_nonconformances.md",
+    "cerebro/comunicaciones/analyze_failure_modes__schedule_preventive_maintenance.md",
+    "cerebro/agentes/control-scada.md",
+    "cerebro/agentes/energia-sustentabilidad.md",
     "README.md.tmp.29119.d811954c54ed",
     "pasos/09-checklist-merge.md.tmp.29119.472ea96e7f65",
-    "pasos/10-cerebro-y-colaboracion.md",
     "pasos/10-cerebro-y-colaboracion.md.tmp.29119.bef0025f66fe",
-    "cerebro/comunicaciones/analyze_failure_modes__manage_nonconformances.md",
-    "cerebro/tools/detect_out_of_control_signals.md",
-    "cerebro/tools/calculate_control_charts.md",
-    "cerebro/comunicaciones/run_msa_analysis__calculate_control_charts.md",
-    "cerebro/tools/collect_quality_measurements.md",
-    "cerebro/tools/calculate_cpk_ppk.md",
-    "cerebro/comunicaciones/calculate_cpk_ppk__manage_product_specs.md",
-    "cerebro/tools/calculate_scm_kpis.md",
-    "cerebro/tools/analyze_visual_patterns.md",
-    "cerebro/tools/analyze_lead_times.md",
-    "cerebro/tools/acknowledge_alarm.md",
-    "pasos/03-archivos-json.md",
-    "pasos/02-api-central.md",
-    "pasos/01-vision-general.md",
-    "cerebro/comunicaciones/calculate_control_charts__detect_out_of_control_signals.md",
-    "cerebro/agentes/mantenimiento-cmms.md",
-    "cerebro/agentes/infraestructura-edge.md",
-    "cerebro/agentes/energia-sustentabilidad.md",
-    "cerebro/agentes/control-scada.md",
-    "cerebro/agentes/digital-twin.md",
-    "cerebro/agentes/vision-artificial-industrial.md",
-    "cerebro/agentes/seguridad-hse.md",
-    "cerebro/agentes/produccion-avanzada.md",
-    "cerebro/agentes/erp-gestion-empresarial.md"
+    "cerebro/tools/detect_out_of_control_signals.md"
   ]
 }

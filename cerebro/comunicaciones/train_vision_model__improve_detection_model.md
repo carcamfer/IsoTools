@@ -42,5 +42,5 @@ tags: [comunicacion, MODEL_TRAINED]
 ## Flujo de trabajo
 1. `npm run rama:comm train_vision_model__improve_detection_model` (crea/cambia a la rama `comm/train_vision_model__improve_detection_model`).
 2. Implementa el cambio en ambas tools si aplica y actualiza esta bitácora.
-3. PR de la rama a `main` cuando el contrato quede estable.
+3. PR de la rama a `feature/filter` cuando el contrato quede estable.
 

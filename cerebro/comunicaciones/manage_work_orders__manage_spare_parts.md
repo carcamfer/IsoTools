@@ -42,5 +42,5 @@ tags: [comunicacion, WORK_ORDER_APPROVED]
 ## Flujo de trabajo
 1. `npm run rama:comm manage_work_orders__manage_spare_parts` (crea/cambia a la rama `comm/manage_work_orders__manage_spare_parts`).
 2. Implementa el cambio en ambas tools si aplica y actualiza esta bitácora.
-3. PR de la rama a `main` cuando el contrato quede estable.
+3. PR de la rama a `feature/filter` cuando el contrato quede estable.
 

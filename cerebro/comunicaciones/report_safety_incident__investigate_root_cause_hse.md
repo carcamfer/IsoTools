@@ -42,5 +42,5 @@ tags: [comunicacion, INCIDENT_REPORTED]
 ## Flujo de trabajo
 1. `npm run rama:comm report_safety_incident__investigate_root_cause_hse` (crea/cambia a la rama `comm/report_safety_incident__investigate_root_cause_hse`).
 2. Implementa el cambio en ambas tools si aplica y actualiza esta bitácora.
-3. PR de la rama a `main` cuando el contrato quede estable.
+3. PR de la rama a `feature/filter` cuando el contrato quede estable.
 

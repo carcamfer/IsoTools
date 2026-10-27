@@ -86,7 +86,7 @@ Sin API key, todo `POST`/`GET` de eventos responde `401`. Consíguela **antes de
 - Ya hay `railway.toml` en el repo → el deploy es prácticamente automático.
 - Postgres administrado incluido (no instalas ni respaldas nada manualmente).
 - $5-20/mes según uso (suficiente para los primeros 6-12 meses).
-- Auto-deploy: cada push a `main` redespliega.
+- Auto-deploy: cada push a `main` redespliega. Los PRs entran a `feature/filter` y se promueven a `main` completos.
 - Si crece el uso a >100k eventos/día sostenidos, ahí sí evalúas migrar a VPS (Hetzner ~$10/mes con misma carga). Por debajo de eso, Railway gana.
 
 ### Pasos de deploy (una vez)

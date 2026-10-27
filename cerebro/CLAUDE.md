@@ -82,9 +82,9 @@ Cuando modificas una tool o un contrato:
 
 Cada nota de comunicación nombra su rama `comm/<source>__<target>`. El flujo:
 
-1. `npm run rama:comm <source>__<target>` crea/cambia a esa rama desde `main`.
+1. `npm run rama:comm <source>__<target>` crea/cambia a esa rama desde `feature/filter`.
 2. Los cambios del contrato entre esas dos tools se trabajan **en esa rama**.
 3. Se actualiza la bitácora de la nota de comunicación en la misma rama.
-4. Cuando el contrato queda estable → **PR de la rama a `main`**.
+4. Cuando el contrato queda estable → **PR de la rama a `feature/filter`**.
 
-Así, `main` siempre tiene el estado acordado y cada negociación entre dos tools vive aislada en su rama hasta que cierra.
+Así, `feature/filter` siempre tiene el estado acordado y cada negociación entre dos tools vive aislada en su rama hasta que cierra.

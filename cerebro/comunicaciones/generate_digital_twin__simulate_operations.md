@@ -42,5 +42,5 @@ tags: [comunicacion, TWIN_READY]
 ## Flujo de trabajo
 1. `npm run rama:comm generate_digital_twin__simulate_operations` (crea/cambia a la rama `comm/generate_digital_twin__simulate_operations`).
 2. Implementa el cambio en ambas tools si aplica y actualiza esta bitácora.
-3. PR de la rama a `main` cuando el contrato quede estable.
+3. PR de la rama a `feature/filter` cuando el contrato quede estable.
 

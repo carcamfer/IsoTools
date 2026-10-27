@@ -42,5 +42,5 @@ tags: [comunicacion, WMS_OPERATION_COMPLETE]
 ## Flujo de trabajo
 1. `npm run rama:comm manage_warehouse_wms__calculate_scm_kpis` (crea/cambia a la rama `comm/manage_warehouse_wms__calculate_scm_kpis`).
 2. Implementa el cambio en ambas tools si aplica y actualiza esta bitácora.
-3. PR de la rama a `main` cuando el contrato quede estable.
+3. PR de la rama a `feature/filter` cuando el contrato quede estable.
 

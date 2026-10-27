@@ -42,5 +42,5 @@ tags: [comunicacion, ENERGY_READING_AVAILABLE]
 ## Flujo de trabajo
 1. `npm run rama:comm monitor_energy_meters__calculate_energy_kpis` (crea/cambia a la rama `comm/monitor_energy_meters__calculate_energy_kpis`).
 2. Implementa el cambio en ambas tools si aplica y actualiza esta bitácora.
-3. PR de la rama a `main` cuando el contrato quede estable.
+3. PR de la rama a `feature/filter` cuando el contrato quede estable.
 

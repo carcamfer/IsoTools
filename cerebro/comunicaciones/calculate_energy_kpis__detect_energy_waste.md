@@ -42,5 +42,5 @@ tags: [comunicacion, ENPI_CALCULATED]
 ## Flujo de trabajo
 1. `npm run rama:comm calculate_energy_kpis__detect_energy_waste` (crea/cambia a la rama `comm/calculate_energy_kpis__detect_energy_waste`).
 2. Implementa el cambio en ambas tools si aplica y actualiza esta bitácora.
-3. PR de la rama a `main` cuando el contrato quede estable.
+3. PR de la rama a `feature/filter` cuando el contrato quede estable.
 

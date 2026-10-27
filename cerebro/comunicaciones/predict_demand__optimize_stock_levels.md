@@ -42,5 +42,5 @@ tags: [comunicacion, DEMAND_FORECAST_READY]
 ## Flujo de trabajo
 1. `npm run rama:comm predict_demand__optimize_stock_levels` (crea/cambia a la rama `comm/predict_demand__optimize_stock_levels`).
 2. Implementa el cambio en ambas tools si aplica y actualiza esta bitácora.
-3. PR de la rama a `main` cuando el contrato quede estable.
+3. PR de la rama a `feature/filter` cuando el contrato quede estable.
 

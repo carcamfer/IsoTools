@@ -8,8 +8,8 @@
 //   npm run rama:comm <sourceToolId> <targetToolId>
 //   npm run rama:comm --list        (lista las comunicaciones disponibles)
 //
-// La rama se crea a partir de `main`. Trabaja ahí los cambios del contrato entre
-// las dos tools y abre un PR a `main` cuando quede estable.
+// La rama se crea a partir de `feature/filter`. Trabaja ahí los cambios del contrato
+// entre las dos tools y abre un PR a `feature/filter` cuando quede estable.
 // ─────────────────────────────────────────────────────────────────────────────
 import { execSync } from 'child_process';
 import { readFileSync } from 'fs';
@@ -62,9 +62,9 @@ try {
     sh(`git checkout ${branch}`);
     console.log(`✓ Cambiado a la rama existente ${branch}`);
   } else {
-    // base: main si existe, si no la rama actual
-    let base = 'main';
-    try { sh('git rev-parse --verify main'); } catch { base = sh('git rev-parse --abbrev-ref HEAD'); }
+    // base: feature/filter si existe, si no la rama actual
+    let base = 'feature/filter';
+    try { sh('git rev-parse --verify feature/filter'); } catch { base = sh('git rev-parse --abbrev-ref HEAD'); }
     sh(`git checkout -b ${branch} ${base}`);
     console.log(`✓ Rama ${branch} creada desde ${base}`);
   }
@@ -72,7 +72,7 @@ try {
     console.log(`  Contrato: ${match.event} (${match.protocol || '—'})`);
     console.log(`  Nota del cerebro: cerebro/comunicaciones/${slug}.md`);
   }
-  console.log('\nCuando el contrato quede estable: PR de esta rama → main.');
+  console.log('\nCuando el contrato quede estable: PR de esta rama → feature/filter.');
 } catch (e) {
   console.error('Error de git:', e.message);
   process.exit(1);

@@ -42,5 +42,5 @@ tags: [comunicacion, FAILURE_PREDICTED]
 ## Flujo de trabajo
 1. `npm run rama:comm predict_machine_failure__generate_digital_twin_model` (crea/cambia a la rama `comm/predict_machine_failure__generate_digital_twin_model`).
 2. Implementa el cambio en ambas tools si aplica y actualiza esta bitácora.
-3. PR de la rama a `main` cuando el contrato quede estable.
+3. PR de la rama a `feature/filter` cuando el contrato quede estable.
 

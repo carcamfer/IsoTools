@@ -42,5 +42,5 @@ tags: [comunicacion, SHIPMENT_DELAYED]
 ## Flujo de trabajo
 1. `npm run rama:comm track_shipments__predict_supply_disruptions` (crea/cambia a la rama `comm/track_shipments__predict_supply_disruptions`).
 2. Implementa el cambio en ambas tools si aplica y actualiza esta bitácora.
-3. PR de la rama a `main` cuando el contrato quede estable.
+3. PR de la rama a `feature/filter` cuando el contrato quede estable.
 

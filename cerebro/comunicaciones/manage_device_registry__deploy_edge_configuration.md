@@ -42,5 +42,5 @@ tags: [comunicacion, NEW_DEVICE_REGISTERED]
 ## Flujo de trabajo
 1. `npm run rama:comm manage_device_registry__deploy_edge_configuration` (crea/cambia a la rama `comm/manage_device_registry__deploy_edge_configuration`).
 2. Implementa el cambio en ambas tools si aplica y actualiza esta bitácora.
-3. PR de la rama a `main` cuando el contrato quede estable.
+3. PR de la rama a `feature/filter` cuando el contrato quede estable.
 

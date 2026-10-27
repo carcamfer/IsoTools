@@ -42,5 +42,5 @@ tags: [comunicacion, CONVEYOR_FRAME]
 ## Flujo de trabajo
 1. `npm run rama:comm capture_video_stream__count_items_on_conveyor` (crea/cambia a la rama `comm/capture_video_stream__count_items_on_conveyor`).
 2. Implementa el cambio en ambas tools si aplica y actualiza esta bitácora.
-3. PR de la rama a `main` cuando el contrato quede estable.
+3. PR de la rama a `feature/filter` cuando el contrato quede estable.
 

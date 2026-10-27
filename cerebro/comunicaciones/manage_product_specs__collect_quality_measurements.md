@@ -42,5 +42,5 @@ tags: [comunicacion, PRODUCT_SPEC_UPDATED]
 ## Flujo de trabajo
 1. `npm run rama:comm manage_product_specs__collect_quality_measurements` (crea/cambia a la rama `comm/manage_product_specs__collect_quality_measurements`).
 2. Implementa el cambio en ambas tools si aplica y actualiza esta bitácora.
-3. PR de la rama a `main` cuando el contrato quede estable.
+3. PR de la rama a `feature/filter` cuando el contrato quede estable.
 

@@ -26,7 +26,7 @@ Memoria viva de las **tools ISO** y de **cómo se comunican entre sí**. Empieza
 2. **Ubica tu tool** en [tools/](tools/) y mira sus comunicaciones.
 3. **Crea tu rama:** `npm run rama:comm <source>__<target>`.
 4. **Implementa** y, en cada cambio de contrato, **anota en la bitácora** de la nota de comunicación.
-5. **PR a `main`** cuando el contrato quede estable.
+5. **PR a `feature/filter`** cuando el contrato quede estable.
 
 ## Estado actual
 

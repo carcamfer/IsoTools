@@ -42,5 +42,5 @@ tags: [comunicacion, RISK_ANALYZED]
 ## Flujo de trabajo
 1. `npm run rama:comm analyze_network_risk__generate_security_strategy` (crea/cambia a la rama `comm/analyze_network_risk__generate_security_strategy`).
 2. Implementa el cambio en ambas tools si aplica y actualiza esta bitácora.
-3. PR de la rama a `main` cuando el contrato quede estable.
+3. PR de la rama a `feature/filter` cuando el contrato quede estable.
 

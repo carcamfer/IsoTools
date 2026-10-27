@@ -89,20 +89,20 @@ Sí, **pero solo después de que hagas `push`**:
 
 ## 10.6 ¿Cuándo sube a Railway? (ese paso NO cambió)
 
-**No subes a Railway a mano, y no se sube por rama.** Railway está conectado a `main`:
+**No subes a Railway a mano, y no se sube por rama.** Los PRs entran a `feature/filter` (integración) y Railway está conectado a `main` (producción):
 
 ```
-rama comm/...  →  PR  →  merge a main  →  Railway redespliega solo
+rama comm/...  →  PR  →  merge a feature/filter  →  promoción feature/filter → main  →  Railway redespliega solo
 ```
 
-- Mientras estés en tu rama `comm/...`, **nada toca producción**. Pruebas contra la plataforma central con tu API key (paso 2); `main` no se ve afectada hasta el merge.
-- **Cuando el contrato cerró** (10.4) y el PR pasa la checklist (paso 9) → **merge a `main`**.
-- Ese merge dispara el **auto-deploy de Railway** (paso 2 §2.3). No hay un botón extra que apretar.
+- Mientras estés en tu rama `comm/...`, **nada toca producción**. Pruebas contra la plataforma central con tu API key (paso 2).
+- **Cuando el contrato cerró** (10.4) y el PR pasa la checklist (paso 9) → **merge a `feature/filter`**. Eso todavía no despliega.
+- El admin promueve `feature/filter` → `main` **completa** (nunca cherry-picks, para que las dos ramas no diverjan). Ese push dispara el **auto-deploy de Railway** (paso 2 §2.3).
 
 **Lo mejor / regla de oro:**
-- `main` = solo contratos cerrados y acordados. Nunca trabajes el contrato directo en `main`.
-- Una comunicación a la vez por rama → PR pequeño → merge → deploy.
-- Si necesitas subir tu tool a producción **antes** de que el contrato esté listo, usa un **placeholder** (paso 7): se mergea a `main`, despliega, pero no rompe a nadie.
+- `feature/filter` = solo contratos cerrados y acordados; `main` = lo que corre en producción. Nunca trabajes el contrato directo en ninguna de las dos.
+- Una comunicación a la vez por rama → PR pequeño → merge → promoción → deploy.
+- Si necesitas subir tu tool a producción **antes** de que el contrato esté listo, usa un **placeholder** (paso 7): se mergea a `feature/filter`, se promueve, despliega, pero no rompe a nadie.
 
 ---
 
@@ -113,7 +113,7 @@ rama comm/...  →  PR  →  merge a main  →  Railway redespliega solo
 3. Acuerda el contrato (evento + forma del `data` + condición) con la otra persona **en la nota**.
 4. Trabaja en `comm/<source>__<target>`, haz `push` y abre un Draft PR para que todos vean el avance.
 5. La tool está lista cuando entrada y salida cierran y la otra persona confirma.
-6. PR → merge a `main` → Railway despliega solo. Nunca subas a Railway a mano.
+6. PR → merge a `feature/filter` → promoción a `main` → Railway despliega solo. Nunca subas a Railway a mano.
 
 ---
 

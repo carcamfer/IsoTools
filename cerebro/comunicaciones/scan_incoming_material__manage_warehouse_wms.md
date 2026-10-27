@@ -42,5 +42,5 @@ tags: [comunicacion, MATERIAL_RECEIVED]
 ## Flujo de trabajo
 1. `npm run rama:comm scan_incoming_material__manage_warehouse_wms` (crea/cambia a la rama `comm/scan_incoming_material__manage_warehouse_wms`).
 2. Implementa el cambio en ambas tools si aplica y actualiza esta bitácora.
-3. PR de la rama a `main` cuando el contrato quede estable.
+3. PR de la rama a `feature/filter` cuando el contrato quede estable.
 
